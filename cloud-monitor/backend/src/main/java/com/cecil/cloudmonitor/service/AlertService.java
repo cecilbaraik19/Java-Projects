@@ -26,12 +26,15 @@ public class AlertService {
     private final AlertRepository alerts;
     private final AlertRuleRepository rules;
     private final SimpMessagingTemplate messaging;
+    private final EmailAlertService email;
     private final Map<String, Instant> lastFired = new ConcurrentHashMap<>();
 
-    public AlertService(AlertRepository alerts, AlertRuleRepository rules, SimpMessagingTemplate messaging) {
+    public AlertService(AlertRepository alerts, AlertRuleRepository rules, SimpMessagingTemplate messaging,
+                        EmailAlertService email) {
         this.alerts = alerts;
         this.rules = rules;
         this.messaging = messaging;
+        this.email = email;
     }
 
     public void evaluate(List<CloudResource> resources) {
@@ -84,6 +87,7 @@ public class AlertService {
 
     private void publish(Alert a) {
         messaging.convertAndSend("/topic/alerts", a);
+        email.onAlert(a);
     }
 
     // ---------- queries & actions ----------
