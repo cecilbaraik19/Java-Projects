@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useLive } from '../context/LiveContext'
 import { timeOnly } from '../utils/format'
 import Toasts from './Toasts'
+import ExportMenu from './ExportMenu'
 
 const NAV = [
   { to: '/', label: 'Dashboard', Icon: LayoutDashboard, end: true },
@@ -110,6 +111,8 @@ export default function Layout() {
           </button>
 
           <div className="flex-1" />
+
+          <ExportMenu />
 
           <button onClick={() => navigate('/alerts')} title="Alerts" className="relative rounded-lg p-2 text-ink-2 hover:bg-surface-2">
             <motion.span key={activeAlerts} animate={activeAlerts ? { rotate: [0, -15, 12, -8, 0] } : {}} transition={{ duration: 0.6 }} className="block">
