@@ -2,7 +2,6 @@ package com.cecil.cloudmonitor.config;
 
 import com.cecil.cloudmonitor.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -48,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher("/api/auth/login")).permitAll()
                         .requestMatchers(antMatcher("/ws/**")).permitAll()   // token checked in StompAuthInterceptor
                         .requestMatchers(antMatcher("/error")).permitAll()
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers(antMatcher("/h2-console/**")).permitAll() // only active when H2 is used
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
