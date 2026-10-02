@@ -1,8 +1,15 @@
+# Dependencies & builds
 node_modules/
 dist/
-backend/target/
-backend/data/
+target/
+
+# H2 blockchain database (created where the app runs)
+data/
+
+# React build copied into the jar
 backend/src/main/resources/static/
+
+# IDE
 .idea/
 *.iml
 .vscode/
