@@ -12,6 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * Live channel. The browser connects to ws://host/ws and subscribes to:
  *  /topic/live   - all resources + overview, every tick
  *  /topic/alerts - each new alert as it fires
+ *  /topic/logs   - each new log line
  */
 @Configuration
 @EnableWebSocketMessageBroker

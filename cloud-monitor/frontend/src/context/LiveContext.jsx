@@ -19,6 +19,7 @@ export function LiveProvider({ children }) {
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
   const alertListeners = useRef(new Set())
+  const logListeners = useRef(new Set())
 
   useEffect(() => { pausedRef.current = paused }, [paused])
 
@@ -67,6 +68,11 @@ export function LiveProvider({ children }) {
           const { overview: ov, resources: list } = JSON.parse(msg.body)
           applyUpdate(ov, list)
         })
+        client.subscribe('/topic/logs', (msg) => {
+          if (logListeners.current.size === 0) return
+          const line = JSON.parse(msg.body)
+          logListeners.current.forEach((fn) => fn(line))
+        })
         client.subscribe('/topic/alerts', (msg) => {
           const alert = JSON.parse(msg.body)
           alertListeners.current.forEach((fn) => fn(alert))
@@ -88,6 +94,12 @@ export function LiveProvider({ children }) {
     return () => alertListeners.current.delete(fn)
   }, [])
 
+  /** Lets the Logs page receive each new log line. Returns an unsubscribe fn. */
+  const onLog = useCallback((fn) => {
+    logListeners.current.add(fn)
+    return () => logListeners.current.delete(fn)
+  }, [])
+
   /** Replace one resource immediately after an action (start/stop) without waiting for the next tick. */
   const patchResource = useCallback((r) => {
     setResources((list) => list.map((x) => (x.id === r.id ? r : x)))
@@ -96,7 +108,7 @@ export function LiveProvider({ children }) {
   return (
     <LiveContext.Provider value={{
       resources, overview, series, connected, lastUpdate, paused, setPaused,
-      toasts, dismissToast, onAlert, patchResource,
+      toasts, dismissToast, onAlert, onLog, patchResource,
     }}>
       {children}
     </LiveContext.Provider>

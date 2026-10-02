@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Bell, DollarSign, LayoutDashboard, LogOut, Menu, Moon, Pause, Play, Server, Sun, X } from 'lucide-react'
+import { Activity, Bell, DollarSign, LayoutDashboard, ScrollText, LogOut, Menu, Moon, Pause, Play, Server, Sun, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useLive } from '../context/LiveContext'
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/', label: 'Dashboard', Icon: LayoutDashboard, end: true },
   { to: '/resources', label: 'Resources', Icon: Server },
   { to: '/alerts', label: 'Alerts', Icon: Bell },
+  { to: '/logs', label: 'Logs', Icon: ScrollText },
   { to: '/costs', label: 'Costs', Icon: DollarSign },
 ]
 

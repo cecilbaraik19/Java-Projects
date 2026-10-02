@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Bell, ChevronLeft, Clock, DollarSign, Globe, MapPin, Monitor } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Bell, ChevronLeft, Clock, DollarSign, Globe, MapPin, Monitor, ScrollText } from 'lucide-react'
 import api from '../api/client'
 import { useLive } from '../context/LiveContext'
 import useHistory, { RANGES } from '../hooks/useHistory'
@@ -72,7 +72,13 @@ export default function ResourceDetail() {
             </div>
             <p className="mt-1.5 text-xs text-muted">{r.os}</p>
           </div>
-          <ResourceActions resource={r} />
+          <div className="flex items-center gap-2">
+            <Link to={`/logs?resource=${r.id}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink hover:bg-surface-2">
+              <ScrollText size={15} /> Logs
+            </Link>
+            <ResourceActions resource={r} />
+          </div>
         </div>
       </Card>
 

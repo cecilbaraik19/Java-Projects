@@ -30,6 +30,7 @@ public class MonitoringService {
     private final SimulationService simulation;
     private final LocalMetricsService local;
     private final AlertService alertService;
+    private final LogService logs;
     private final SimpMessagingTemplate messaging;
     private final Object lock = new Object();
 
@@ -44,17 +45,19 @@ public class MonitoringService {
 
     public MonitoringService(CloudResourceRepository resources, MetricSnapshotRepository snapshots,
                              SimulationService simulation, LocalMetricsService local,
-                             AlertService alertService, SimpMessagingTemplate messaging) {
+                             AlertService alertService, LogService logs, SimpMessagingTemplate messaging) {
         this.resources = resources;
         this.snapshots = snapshots;
         this.simulation = simulation;
         this.local = local;
         this.alertService = alertService;
+        this.logs = logs;
         this.messaging = messaging;
     }
 
     /** Called by DataSeeder once the database is filled. */
     public void markReady() {
+        logs.backfill(resources.findAll(), 10);
         this.ready = true;
     }
 
@@ -88,6 +91,7 @@ public class MonitoringService {
             }
         }
         alertService.evaluate(all);
+        logs.generate(all);
         messaging.convertAndSend("/topic/live", new LiveUpdate(buildOverview(all), sorted(all)));
     }
 

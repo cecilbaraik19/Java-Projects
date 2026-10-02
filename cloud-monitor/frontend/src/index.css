@@ -90,3 +90,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* New log line: brief highlight that fades out */
+@keyframes log-flash { from { background: color-mix(in srgb, var(--accent) 18%, transparent); } to { background: transparent; } }
+.log-new { animation: log-flash 1.4s ease-out; }
+@media (prefers-reduced-motion: reduce) { .log-new { animation: none; } }

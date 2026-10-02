@@ -9,6 +9,7 @@ import Resources from './pages/Resources'
 import ResourceDetail from './pages/ResourceDetail'
 import Alerts from './pages/Alerts'
 import Costs from './pages/Costs'
+import Logs from './pages/Logs'
 
 function Protected() {
   const { user, loading } = useAuth()
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/resources/:id" element={<ResourceDetail />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/costs" element={<Costs />} />
+              <Route path="/logs" element={<Logs />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

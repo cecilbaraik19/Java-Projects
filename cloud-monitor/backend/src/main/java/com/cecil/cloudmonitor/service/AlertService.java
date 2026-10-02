@@ -27,14 +27,16 @@ public class AlertService {
     private final AlertRuleRepository rules;
     private final SimpMessagingTemplate messaging;
     private final EmailAlertService email;
+    private final LogService logs;
     private final Map<String, Instant> lastFired = new ConcurrentHashMap<>();
 
     public AlertService(AlertRepository alerts, AlertRuleRepository rules, SimpMessagingTemplate messaging,
-                        EmailAlertService email) {
+                        EmailAlertService email, LogService logs) {
         this.alerts = alerts;
         this.rules = rules;
         this.messaging = messaging;
         this.email = email;
+        this.logs = logs;
     }
 
     public void evaluate(List<CloudResource> resources) {
@@ -88,6 +90,12 @@ public class AlertService {
     private void publish(Alert a) {
         messaging.convertAndSend("/topic/alerts", a);
         email.onAlert(a);
+        String level = switch (a.getSeverity()) {
+            case CRITICAL -> "ERROR";
+            case WARNING -> "WARN";
+            default -> "INFO";
+        };
+        logs.system(level, "alert: " + a.getMessage());
     }
 
     // ---------- queries & actions ----------
