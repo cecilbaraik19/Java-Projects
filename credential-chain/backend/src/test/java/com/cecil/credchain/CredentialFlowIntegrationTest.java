@@ -52,6 +52,17 @@ class CredentialFlowIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         String staffToken = "Bearer " + mapper.readTree(staffLogin).get("token").asText();
 
+        // 1d-2. Staff can change their password; old one stops working
+        mvc.perform(post("/api/auth/change-password").header("Authorization", staffToken).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"wrong\",\"newPassword\":\"newSecret456\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/auth/change-password").header("Authorization", staffToken).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"secret123\",\"newPassword\":\"newSecret456\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"reg@test.edu\",\"password\":\"newSecret456\"}"))
+                .andExpect(status().isOk());
+
         // 1e. Admin cannot issue credentials (wrong role)
         mvc.perform(post("/api/credentials").header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)

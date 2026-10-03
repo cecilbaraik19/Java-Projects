@@ -1,5 +1,5 @@
 import { Link, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
-import { Blocks, LayoutDashboard, ShieldCheck, Stamp, Building2, GraduationCap, Hexagon, LogIn, LogOut, UserCircle2 } from 'lucide-react'
+import { Blocks, LayoutDashboard, ShieldCheck, Stamp, Building2, GraduationCap, Hexagon, LogIn, LogOut, UserCircle2, FileSpreadsheet } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import IssuerPortal from './pages/IssuerPortal.jsx'
 import Verify from './pages/Verify.jsx'
@@ -8,11 +8,14 @@ import Institutions from './pages/Institutions.jsx'
 import CredentialPage from './pages/CredentialPage.jsx'
 import StudentWallet from './pages/StudentWallet.jsx'
 import Login from './pages/Login.jsx'
+import BulkIssue from './pages/BulkIssue.jsx'
+import Account from './pages/Account.jsx'
 import { useAuth } from './auth.jsx'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/issue', label: 'Issuer Portal', icon: Stamp },
+  { to: '/bulk', label: 'Bulk Issue', icon: FileSpreadsheet },
   { to: '/verify', label: 'Verify', icon: ShieldCheck },
   { to: '/student', label: 'Student Wallet', icon: GraduationCap },
   { to: '/explorer', label: 'Chain Explorer', icon: Blocks },
@@ -28,10 +31,10 @@ function UserBox() {
   return (
     <div className="user-box">
       <UserCircle2 size={28} />
-      <div className="user-info">
+      <Link to="/account" className="user-info" title="My account">
         <strong>{user.name}</strong>
         <span>{user.role === 'ADMIN' ? 'Administrator' : user.institutionName}</span>
-      </div>
+      </Link>
       <button className="icon-btn" title="Sign out" aria-label="Sign out"
         onClick={() => { logout(); navigate('/') }}><LogOut size={18} /></button>
     </div>
@@ -63,6 +66,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/bulk" element={<BulkIssue />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/issue" element={<IssuerPortal />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/verify/:id" element={<Verify />} />

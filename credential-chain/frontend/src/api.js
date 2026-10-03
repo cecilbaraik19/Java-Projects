@@ -57,6 +57,7 @@ export const api = {
   registerInstitution: (body) => request('POST', '/institutions', body, { auth: true }),
   login: (email, password) => request('POST', '/auth/login', { email, password }),
   me: () => request('GET', '/auth/me', undefined, { auth: true }),
+  changePassword: (currentPassword, newPassword) => request('POST', '/auth/change-password', { currentPassword, newPassword }, { auth: true }),
 
   recentCredentials: () => request('GET', '/credentials'),
   byStudent: (studentId) => request('GET', `/credentials?studentId=${encodeURIComponent(studentId)}`),

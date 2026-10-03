@@ -129,6 +129,7 @@ java -jar target/credential-chain-1.0.0.jar   # UI + API on http://localhost:808
 |---|---|---|---|
 | POST | `/api/auth/login` | – | `{email, password}` → `{token, user}` |
 | GET | `/api/auth/me` | Bearer | Current user |
+| POST | `/api/auth/change-password` | Bearer | `{currentPassword, newPassword}` |
 | POST | `/api/institutions` | Bearer (ADMIN) | Register an institution + its staff login. Returns the API key **once** |
 | GET | `/api/institutions` | – | List institutions |
 | POST | `/api/credentials` | Bearer (ISSUER) or `X-API-Key` | Issue a credential |
@@ -168,6 +169,38 @@ credential-chain/
         ├── pages/        Dashboard, IssuerPortal, Verify, StudentWallet, Explorer, Institutions, CredentialPage
         └── components/   CredentialCertificate (with QR), VerificationReport, Hash, StatusBadge, Toast
 ```
+
+## Bulk issue from CSV / Excel
+
+Sign in as college staff → **Bulk Issue**. Download the template, fill it in Excel, then
+**File → Save As → CSV UTF-8**, and drop the file in. Every row is checked first (missing
+fields, future dates, wrong date format, duplicates); only valid rows are issued. Dates can be
+`yyyy-mm-dd` or `dd-mm-yyyy`. Download the results CSV to get each student's credential ID
+and verify link.
+
+## Open it on your phone (QR codes)
+
+QR codes point to the address the site was opened with, so open the site through the address
+your phone can reach, **then** issue/download certificates.
+
+**Same Wi-Fi (quickest):**
+```bash
+cd frontend
+npm run dev -- --host
+```
+Vite prints a `Network:` address like `http://192.168.1.5:5173`. Open that address (on the PC too)
+and allow Node.js through Windows Firewall if asked. Phones on the same Wi-Fi can now scan the QR codes.
+
+**Anywhere on the internet (free, no account) with Cloudflare Tunnel:**
+```bash
+winget install --id Cloudflare.cloudflared
+cloudflared tunnel --url http://localhost:5173
+```
+It prints a public `https://<random>.trycloudflare.com` address. Open that address, and any phone can
+scan the QR codes. The address changes every time you start the tunnel; stop it with `Ctrl + C`.
+
+> ⚠️ Before sharing a public link, sign in and **change the demo passwords** (click your name in the
+> sidebar → *Change password*). The demo accounts box on the login page is hidden on public addresses.
 
 ## Using MySQL instead of H2
 

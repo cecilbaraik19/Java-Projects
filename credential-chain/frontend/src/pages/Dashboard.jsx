@@ -5,6 +5,7 @@ import { api, fmtTime } from '../api.js'
 import Hash from '../components/Hash.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useToast } from '../components/Toast.jsx'
+import { TransactionsPerBlock, StatusBreakdown, MiningEffort } from '../components/Charts.jsx'
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -90,6 +91,23 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+
+      <div className="grid-2">
+        <section className="card">
+          <div className="card-head"><h2>Transactions per block</h2></div>
+          <TransactionsPerBlock chain={chain} />
+        </section>
+        <div className="stack">
+          <section className="card">
+            <div className="card-head"><h2>Credential status</h2></div>
+            <StatusBreakdown stats={stats} />
+          </section>
+          <section className="card">
+            <div className="card-head"><h2>Mining effort (proof-of-work)</h2></div>
+            <MiningEffort chain={chain} />
+          </section>
+        </div>
+      </div>
 
       <div className="grid-2">
         <section className="card">
