@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KeyRound, LogOut, Send, Ban } from 'lucide-react'
+import { KeyRound, LogOut, Send, Ban, FileText } from 'lucide-react'
 import { api, session } from '../api.js'
 import { useToast } from '../components/Toast.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import CredentialCertificate from '../components/CredentialCertificate.jsx'
+import { downloadCertificatePdf } from '../certificatePdf.js'
 
 const TYPES = ["Bachelor's Degree", "Master's Degree", 'Diploma', 'Certificate', 'Transcript', 'Doctorate']
 // Today's date in the user's own timezone, as yyyy-mm-dd (used to block future dates)
@@ -118,7 +119,10 @@ export default function IssuerPortal() {
             ? (
               <div className="stack">
                 <CredentialCertificate view={issued} />
-                <button className="btn" onClick={() => navigate(`/credential/${issued.credential.credentialId}`)}>Open credential page</button>
+                <div className="actions">
+                  <button className="btn" onClick={() => navigate(`/credential/${issued.credential.credentialId}`)}>Open credential page</button>
+                  <button className="btn" onClick={() => downloadCertificatePdf(issued).catch((e) => toast(e.message, 'error'))}><FileText size={16} /> Download PDF</button>
+                </div>
               </div>
             )
             : <div className="card placeholder">Issued credentials will preview here.</div>}

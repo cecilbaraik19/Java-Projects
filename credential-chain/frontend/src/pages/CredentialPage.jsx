@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Download, Printer, ShieldCheck, Link2 } from 'lucide-react'
+import { Download, Printer, ShieldCheck, Link2, FileText } from 'lucide-react'
 import { api, downloadJson } from '../api.js'
 import CredentialCertificate from '../components/CredentialCertificate.jsx'
 import { useToast } from '../components/Toast.jsx'
+import { downloadCertificatePdf } from '../certificatePdf.js'
 
 export default function CredentialPage() {
   const { id } = useParams()
@@ -19,6 +20,13 @@ export default function CredentialPage() {
     try {
       downloadJson(await api.document(id), `${id}.json`)
     } catch (e) { toast(e.message, 'error') }
+  }
+
+  const downloadPdf = async () => {
+    try {
+      await downloadCertificatePdf(view)
+      toast('PDF certificate downloaded', 'success')
+    } catch (e) { toast('Could not create PDF: ' + e.message, 'error') }
   }
 
   const copyLink = async () => {
@@ -39,6 +47,7 @@ export default function CredentialPage() {
       <CredentialCertificate view={view} />
       <div className="actions no-print">
         <Link className="btn primary" to={`/verify/${id}`}><ShieldCheck size={16} /> Verify now</Link>
+        <button className="btn" onClick={downloadPdf}><FileText size={16} /> Download PDF</button>
         <button className="btn" onClick={download}><Download size={16} /> Download signed JSON</button>
         <button className="btn" onClick={copyLink}><Link2 size={16} /> Copy verify link</button>
         <button className="btn" onClick={() => window.print()}><Printer size={16} /> Print</button>
