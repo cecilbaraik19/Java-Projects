@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { ShieldCheck, ShieldX, FlaskConical, RotateCcw, Database, Boxes, ChevronRight } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ShieldCheck, ShieldX, FlaskConical, RotateCcw, Database, Boxes, ChevronRight, Lock } from 'lucide-react'
 import { api, fmtTime } from '../api.js'
 import Hash from '../components/Hash.jsx'
 import { useToast } from '../components/Toast.jsx'
+import { useAuth } from '../auth.jsx'
 
 export default function Explorer() {
   const { index } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
   const [chain, setChain] = useState([])
   const [report, setReport] = useState(null)
   const [credentialId, setCredentialId] = useState('')
@@ -120,23 +123,33 @@ export default function Explorer() {
 
         <section className="card attack-lab">
           <div className="card-head"><h2><FlaskConical size={20} /> Attack lab</h2></div>
-          <p className="muted small">Simulate attacks, then validate the chain or verify a credential to watch them get caught.</p>
+          {!isAdmin ? (
+            <div className="locked">
+              <Lock size={18} />
+              <p className="small">The attack lab changes real data, so only the administrator can use it.</p>
+              <Link className="btn primary" to="/login" state={{ from: '/explorer' }}>Sign in as admin</Link>
+            </div>
+          ) : (
+            <>
+            <p className="muted small">Simulate attacks, then validate the chain or verify a credential to watch them get caught.</p>
 
-          <h3><Database size={16} /> Edit the database</h3>
-          <p className="small">Change a student's grade directly in the off-chain DB — like a corrupt insider would.</p>
-          <div className="search">
-            <input value={credentialId} onChange={(e) => setCredentialId(e.target.value)} placeholder="Credential ID" />
-            <button className="btn danger" onClick={() => act(() => api.tamperCredential(credentialId.trim()))} disabled={!credentialId.trim()}>Forge grade</button>
-          </div>
+            <h3><Database size={16} /> Edit the database</h3>
+            <p className="small">Change a student's grade directly in the off-chain DB — like a corrupt insider would.</p>
+            <div className="search">
+              <input value={credentialId} onChange={(e) => setCredentialId(e.target.value)} placeholder="Credential ID" />
+              <button className="btn danger" onClick={() => act(() => api.tamperCredential(credentialId.trim()))} disabled={!credentialId.trim()}>Forge grade</button>
+            </div>
 
-          <h3><Boxes size={16} /> Edit a mined block</h3>
-          <p className="small">Alter a transaction inside a block that's already on the chain.</p>
-          <div className="search">
-            <input type="number" min="1" value={tamperIndex} onChange={(e) => setTamperIndex(e.target.value)} />
-            <button className="btn danger" onClick={() => act(() => api.tamperBlock(tamperIndex))}>Tamper block</button>
-          </div>
+            <h3><Boxes size={16} /> Edit a mined block</h3>
+            <p className="small">Alter a transaction inside a block that's already on the chain.</p>
+            <div className="search">
+              <input type="number" min="1" value={tamperIndex} onChange={(e) => setTamperIndex(e.target.value)} />
+              <button className="btn danger" onClick={() => act(() => api.tamperBlock(tamperIndex))}>Tamper block</button>
+            </div>
 
-          <button className="btn ghost full" onClick={() => act(api.restore)}><RotateCcw size={16} /> Restore everything</button>
+            <button className="btn ghost full" onClick={() => act(api.restore)}><RotateCcw size={16} /> Restore everything</button>
+            </>
+          )}
         </section>
       </div>
     </div>

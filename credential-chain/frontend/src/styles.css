@@ -270,3 +270,6 @@ tr.clickable:hover td { background: var(--panel-2); }
   .user-box .user-info { display: none; }
   .sidebar .btn.full-width { width: auto; }
 }
+
+.locked { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; color: var(--muted); }
+.locked p { margin: 0; }

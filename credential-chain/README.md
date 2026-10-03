@@ -115,7 +115,7 @@ java -jar target/credential-chain-1.0.0.jar   # UI + API on http://localhost:808
 4. **Credential page**: show the certificate and QR code, then click **Download signed JSON**.
 5. **Verify**: enter the ID and walk through the green checks.
 6. **Forged file**: edit the grade in the downloaded JSON and upload it. Verification shows **Invalid** with a hash mismatch.
-7. **Attack lab (Chain Explorer)**:
+7. **Attack lab (Chain Explorer)** — sign in as admin first:
    - *Forge grade* (edits the DB) → verify by ID → **Invalid**, because the data no longer matches the on-chain hash.
    - *Tamper block 2* → *Validate entire chain* → the broken block turns red and the issues are listed.
    - *Restore everything* → valid again.
@@ -145,9 +145,9 @@ java -jar target/credential-chain-1.0.0.jar   # UI + API on http://localhost:808
 | POST | `/api/chain/mine` | – | Mine pending transactions |
 | GET | `/api/chain/validate` | – | Full integrity report |
 | GET | `/api/stats` | – | Dashboard numbers |
-| POST | `/api/demo/tamper-credential/{id}` | – | Attack sim: edit the DB |
-| POST | `/api/demo/tamper-block/{i}` | – | Attack sim: edit a block in memory |
-| POST | `/api/demo/restore` | – | Undo both |
+| POST | `/api/demo/tamper-credential/{id}` | Bearer (ADMIN) | Attack sim: edit the DB |
+| POST | `/api/demo/tamper-block/{i}` | Bearer (ADMIN) | Attack sim: edit a block in memory |
+| POST | `/api/demo/restore` | Bearer (ADMIN) | Undo both |
 
 ---
 
@@ -169,10 +169,23 @@ credential-chain/
         └── components/   CredentialCertificate (with QR), VerificationReport, Hash, StatusBadge, Toast
 ```
 
-## Switching to MySQL
+## Using MySQL instead of H2
 
-1. In `pom.xml`, uncomment the `mysql-connector-j` dependency.
-2. In `application.properties`, comment out the H2 datasource lines and uncomment the MySQL ones.
+The app runs on H2 by default. To use MySQL:
+
+1. Create the database and a dedicated user (in `mysql` as root):
+   ```sql
+   CREATE DATABASE IF NOT EXISTS credchain;
+   CREATE USER IF NOT EXISTS 'credchain'@'localhost' IDENTIFIED BY 'credchain123';
+   GRANT ALL PRIVILEGES ON credchain.* TO 'credchain'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+2. Run with the `mysql` profile:
+   - IntelliJ: **Edit Configurations → Active profiles:** `mysql`
+   - Terminal: `mvn spring-boot:run -Dspring-boot.run.profiles=mysql`
+3. Settings are in `application-mysql.properties`. Override the login with environment variables `MYSQL_USER` / `MYSQL_PASSWORD`.
+
+The app's MySQL user can only access the `credchain` database (least privilege), not the whole server.
 
 ## Limitations and future work
 

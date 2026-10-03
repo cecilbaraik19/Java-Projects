@@ -7,6 +7,9 @@ import jakarta.persistence.*;
 @Table(name = "pending_transactions")
 public class PendingTransactionEntity {
 
+    /** Large enough that MySQL uses LONGTEXT (up to 4 GB) instead of TINYTEXT (255 chars). */
+    private static final int LONG_TEXT = 16_777_216;
+
     @Id
     private String id;
 
@@ -14,7 +17,7 @@ public class PendingTransactionEntity {
     private long createdAt;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = LONG_TEXT)
     private String json;
 
     protected PendingTransactionEntity() {}

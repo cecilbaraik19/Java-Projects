@@ -69,9 +69,9 @@ export const api = {
   verify: (id) => request('GET', `/verify/${encodeURIComponent(id)}`),
   verifyDocument: (doc) => request('POST', '/verify/document', doc),
 
-  tamperCredential: (id) => request('POST', `/demo/tamper-credential/${encodeURIComponent(id)}`),
-  tamperBlock: (i) => request('POST', `/demo/tamper-block/${i}`),
-  restore: () => request('POST', '/demo/restore'),
+  tamperCredential: (id) => request('POST', `/demo/tamper-credential/${encodeURIComponent(id)}`, undefined, { auth: true }),
+  tamperBlock: (i) => request('POST', `/demo/tamper-block/${i}`, undefined, { auth: true }),
+  restore: () => request('POST', '/demo/restore', undefined, { auth: true }),
 }
 
 export const shortHash = (h, n = 10) => (h ? `${h.slice(0, n)}…${h.slice(-6)}` : '—')

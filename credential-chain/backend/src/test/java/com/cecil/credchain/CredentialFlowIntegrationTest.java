@@ -97,15 +97,17 @@ class CredentialFlowIntegrationTest {
                 .andExpect(jsonPath("$.checks[?(@.name == 'Issuer signature (ECDSA)')].passed").value(false));
 
         // 7. Tamper with DB record -> INVALID, restore -> VALID
-        mvc.perform(post("/api/demo/tamper-credential/" + id)).andExpect(status().isOk());
+        mvc.perform(post("/api/demo/tamper-credential/" + id)).andExpect(status().isUnauthorized()); // attack lab needs admin
+        mvc.perform(post("/api/demo/tamper-credential/" + id).header("Authorization", staffToken)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/demo/tamper-credential/" + id).header("Authorization", adminToken)).andExpect(status().isOk());
         mvc.perform(get("/api/verify/" + id)).andExpect(jsonPath("$.status").value("INVALID"));
-        mvc.perform(post("/api/demo/restore")).andExpect(status().isOk());
+        mvc.perform(post("/api/demo/restore").header("Authorization", adminToken)).andExpect(status().isOk());
         mvc.perform(get("/api/verify/" + id)).andExpect(jsonPath("$.status").value("VALID"));
 
         // 8. Tamper with a block -> chain invalid, restore -> valid
-        mvc.perform(post("/api/demo/tamper-block/1")).andExpect(status().isOk());
+        mvc.perform(post("/api/demo/tamper-block/1").header("Authorization", adminToken)).andExpect(status().isOk());
         mvc.perform(get("/api/chain/validate")).andExpect(jsonPath("$.valid").value(false));
-        mvc.perform(post("/api/demo/restore")).andExpect(status().isOk());
+        mvc.perform(post("/api/demo/restore").header("Authorization", adminToken)).andExpect(status().isOk());
         mvc.perform(get("/api/chain/validate")).andExpect(jsonPath("$.valid").value(true));
 
         // 9. Revoke

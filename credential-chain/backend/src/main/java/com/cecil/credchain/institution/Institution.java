@@ -10,6 +10,9 @@ import java.time.Instant;
 @Table(name = "institutions")
 public class Institution {
 
+    /** Large enough that MySQL uses LONGTEXT (up to 4 GB) instead of TINYTEXT (255 chars). */
+    private static final int LONG_TEXT = 16_777_216;
+
     @Id
     private String id;
 
@@ -20,7 +23,7 @@ public class Institution {
     private String website;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = LONG_TEXT)
     private String publicKey;
 
     /**
@@ -29,7 +32,7 @@ public class Institution {
      */
     @JsonIgnore
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = LONG_TEXT)
     private String privateKey;
 
     @JsonIgnore
