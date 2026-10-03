@@ -37,6 +37,10 @@ Universities issue **verifiable credentials** (degrees, diplomas, certificates).
 | **On-chain vs off-chain** | `Transaction.dataHash` vs `CredentialEntity` | Only hashes go on-chain, so personal data can be corrected or deleted (privacy, GDPR-style) |
 | **Issuer key anchoring** | `REGISTER_ISSUER` tx | Public keys live on the chain, so a hacked DB can't swap in a fake key |
 | **Revocation** | `REVOKE` tx | Credentials can be withdrawn; history stays auditable |
+| **Password hashing** | `auth/PasswordHasher` | PBKDF2-HMAC-SHA256, random salt, 210,000 iterations; plain passwords are never stored |
+| **Login tokens (JWT)** | `auth/TokenService` | HS256-signed token with role and expiry; editing it breaks the signature |
+| **Role-based access** | `auth/AuthService` | ADMIN registers institutions, ISSUER issues/revokes, anyone can verify |
+| **Brute-force protection** | `AuthService.login` | 5 wrong passwords lock the account for 5 minutes; same error for wrong email or password |
 
 ### Transaction types
 
@@ -61,12 +65,14 @@ cd backend
 mvn spring-boot:run
 ```
 
-On first start the app seeds a demo institution and three credentials (one revoked). Look for this in the console:
+On first start the app seeds a demo institution, three credentials (one revoked) and two logins:
 
-```
-Demo issuer seeded: Demo Institute of Technology (INST-XXXXXXXX)
-Demo API key: demo-issuer-key
-```
+| Role | Email | Password | Can do |
+|---|---|---|---|
+| Admin | `admin@credchain.local` | `admin123` | Register institutions |
+| College staff | `registrar@demo-institute.edu` | `demo123` | Issue and revoke credentials |
+
+Verifying a credential needs **no login**. Change the passwords in `application.properties` for real use.
 
 - H2 console: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/credchain`, user `sa`, no password)
 - Data persists in `backend/data/`. Delete that folder to start a fresh chain.
@@ -104,7 +110,7 @@ java -jar target/credential-chain-1.0.0.jar   # UI + API on http://localhost:808
 ## Demo script (5 minutes)
 
 1. **Dashboard**: show the stats, the linked blocks and "Chain integrity verified".
-2. **Issuer Portal**: sign in with `demo-issuer-key` and issue a credential. It appears as **Pending**.
+2. **Sign in** as `registrar@demo-institute.edu` / `demo123`, open the **Issuer Portal** and issue a credential. It appears as **Pending**.
 3. **Dashboard → Mine block**: watch the proof-of-work run (nonce and time) and the status turn **Active**.
 4. **Credential page**: show the certificate and QR code, then click **Download signed JSON**.
 5. **Verify**: enter the ID and walk through the green checks.
@@ -121,12 +127,13 @@ java -jar target/credential-chain-1.0.0.jar   # UI + API on http://localhost:808
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | `/api/institutions` | – | Register an institution. Returns the API key **once** |
+| POST | `/api/auth/login` | – | `{email, password}` → `{token, user}` |
+| GET | `/api/auth/me` | Bearer | Current user |
+| POST | `/api/institutions` | Bearer (ADMIN) | Register an institution + its staff login. Returns the API key **once** |
 | GET | `/api/institutions` | – | List institutions |
-| POST | `/api/auth/login` | – | `{apiKey}` → institution |
-| POST | `/api/credentials` | `X-API-Key` | Issue a credential |
-| POST | `/api/credentials/{id}/revoke` | `X-API-Key` | `{reason}` → revoke |
-| GET | `/api/credentials/mine` | `X-API-Key` | Credentials issued by me |
+| POST | `/api/credentials` | Bearer (ISSUER) or `X-API-Key` | Issue a credential |
+| POST | `/api/credentials/{id}/revoke` | Bearer (ISSUER) or `X-API-Key` | `{reason}` → revoke |
+| GET | `/api/credentials/mine` | Bearer (ISSUER) or `X-API-Key` | Credentials issued by me |
 | GET | `/api/credentials?studentId=` | – | Student wallet lookup |
 | GET | `/api/credentials/{id}` | – | Credential + live status |
 | GET | `/api/credentials/{id}/document` | – | Download the signed JSON |
@@ -171,5 +178,5 @@ credential-chain/
 
 - **Private keys are stored server-side** so the demo can sign on the institution's behalf. In production, each institution would hold its own key (hardware wallet or HSM) and sign in the browser.
 - The chain runs on a single node. Future work: peer-to-peer nodes with longest-chain consensus, or porting the contract to Ethereum or Hyperledger Fabric.
-- API-key auth is intentionally simple. Future work: JWT, role-based access, and 2FA for registrars.
+- Future work for login: 2FA for registrars, password reset by email, and a fixed `credchain.jwt-secret` so sessions survive restarts.
 - Possible additions: W3C DID support, IPFS for document storage, and batch issuing from CSV.

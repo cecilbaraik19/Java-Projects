@@ -253,3 +253,20 @@ tr.clickable:hover td { background: var(--panel-2); }
   .content { padding: 0; }
   body { background: #fff; }
 }
+
+/* ---------- login & user box ---------- */
+.user-box { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); color: var(--accent); }
+.user-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.user-info strong { color: var(--text); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-info span { color: var(--muted); font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 8px; display: inline-flex; }
+.icon-btn:hover { color: var(--text); background: var(--panel); }
+.full-width { width: 100%; }
+.password-field { position: relative; display: flex; }
+.password-field input { padding-right: 44px; }
+.password-field .icon-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
+.login-page .table td { padding: 8px 10px; }
+@media (max-width: 720px) {
+  .user-box .user-info { display: none; }
+  .sidebar .btn.full-width { width: auto; }
+}

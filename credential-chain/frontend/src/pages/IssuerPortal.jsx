@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { KeyRound, LogOut, Send, Ban, FileText } from 'lucide-react'
-import { api, session } from '../api.js'
+import { Link, useNavigate } from 'react-router-dom'
+import { LogIn, Send, Ban, FileText } from 'lucide-react'
+import { api } from '../api.js'
+import { useAuth } from '../auth.jsx'
 import { useToast } from '../components/Toast.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import CredentialCertificate from '../components/CredentialCertificate.jsx'
@@ -14,8 +15,8 @@ const today = () => new Date().toLocaleDateString('en-CA')
 const EMPTY = { credentialType: TYPES[0], studentName: '', studentId: '', program: '', major: '', grade: '', issueDate: '' }
 
 export default function IssuerPortal() {
-  const [issuer, setIssuer] = useState(null)
-  const [keyInput, setKeyInput] = useState('')
+  const { user } = useAuth()
+  const isIssuer = user?.role === 'ISSUER'
   const [form, setForm] = useState(EMPTY)
   const [issued, setIssued] = useState(null)
   const [mine, setMine] = useState([])
@@ -28,23 +29,8 @@ export default function IssuerPortal() {
   }, [])
 
   useEffect(() => {
-    if (session.apiKey) {
-      api.login(session.apiKey).then((i) => { setIssuer(i); loadMine() }).catch(() => { session.apiKey = null })
-    }
-  }, [loadMine])
-
-  const login = async (e) => {
-    e.preventDefault()
-    try {
-      const inst = await api.login(keyInput.trim())
-      session.apiKey = keyInput.trim()
-      setIssuer(inst)
-      toast(`Signed in as ${inst.name}`, 'success')
-      loadMine()
-    } catch (err) { toast(err.message, 'error') }
-  }
-
-  const logout = () => { session.apiKey = null; setIssuer(null); setMine([]); setIssued(null) }
+    if (isIssuer) loadMine()
+  }, [isIssuer, loadMine])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -70,17 +56,17 @@ export default function IssuerPortal() {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
-  if (!issuer) {
+  if (!isIssuer) {
     return (
       <div className="page narrow">
-        <header className="page-head"><div><h1>Issuer Portal</h1><p>Institutions sign in with their API key to issue credentials.</p></div></header>
-        <form className="card form" onSubmit={login}>
-          <label>API key
-            <input value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="e.g. demo-issuer-key" required />
-          </label>
-          <button className="btn primary"><KeyRound size={16} /> Sign in</button>
-          <p className="muted small">Demo key: <code>demo-issuer-key</code>. New institutions get a key on the Institutions page.</p>
-        </form>
+        <header className="page-head"><div><h1>Issuer Portal</h1><p>College staff sign in to issue and revoke credentials.</p></div></header>
+        <div className="card form">
+          <p>{user?.role === 'ADMIN'
+            ? 'You are signed in as the administrator. Only college staff can issue credentials — sign out and sign in with a college account.'
+            : 'Please sign in with your college staff account.'}</p>
+          {!user && <Link className="btn primary" to="/login" state={{ from: '/issue' }}><LogIn size={16} /> Sign in</Link>}
+          <p className="muted small">Demo: <code>registrar@demo-institute.edu</code> / <code>demo123</code></p>
+        </div>
       </div>
     )
   }
@@ -88,8 +74,7 @@ export default function IssuerPortal() {
   return (
     <div className="page">
       <header className="page-head">
-        <div><h1>Issuer Portal</h1><p>Signed in as <strong>{issuer.name}</strong> <span className="muted">({issuer.id})</span></p></div>
-        <button className="btn ghost" onClick={logout}><LogOut size={16} /> Sign out</button>
+        <div><h1>Issuer Portal</h1><p>Signed in as <strong>{user.name}</strong> · {user.institutionName} <span className="muted">({user.institutionId})</span></p></div>
       </header>
 
       <div className="grid-2">
@@ -130,7 +115,7 @@ export default function IssuerPortal() {
       </div>
 
       <section className="card">
-        <div className="card-head"><h2>Credentials issued by {issuer.name}</h2></div>
+        <div className="card-head"><h2>Credentials issued by {user.institutionName}</h2></div>
         {mine.length === 0 ? <p className="muted">None yet.</p> : (
           <table className="table">
             <thead><tr><th>ID</th><th>Student</th><th>Credential</th><th>Block</th><th>Status</th><th /></tr></thead>

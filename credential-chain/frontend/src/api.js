@@ -1,19 +1,33 @@
 // Thin wrapper over fetch for the Spring Boot API.
-const KEY_STORAGE = 'credchain.apiKey'
+const TOKEN_KEY = 'credchain.token'
+const USER_KEY = 'credchain.user'
 
+// Signed-in session (kept in sessionStorage: cleared when the browser tab is closed)
 export const session = {
-  get apiKey() {
-    try { return sessionStorage.getItem(KEY_STORAGE) } catch { return null }
+  get token() {
+    try { return sessionStorage.getItem(TOKEN_KEY) } catch { return null }
   },
-  set apiKey(v) {
-    try { v ? sessionStorage.setItem(KEY_STORAGE, v) : sessionStorage.removeItem(KEY_STORAGE) } catch { /* ignore */ }
-  }
+  get user() {
+    try { return JSON.parse(sessionStorage.getItem(USER_KEY)) } catch { return null }
+  },
+  save(token, user) {
+    try {
+      sessionStorage.setItem(TOKEN_KEY, token)
+      sessionStorage.setItem(USER_KEY, JSON.stringify(user))
+    } catch { /* ignore */ }
+  },
+  clear() {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(USER_KEY)
+    } catch { /* ignore */ }
+  },
 }
 
 async function request(method, path, body, { auth = false } = {}) {
   const headers = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
-  if (auth && session.apiKey) headers['X-API-Key'] = session.apiKey
+  if (auth && session.token) headers['Authorization'] = `Bearer ${session.token}`
   let res
   try {
     res = await fetch(`/api${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined })
@@ -22,6 +36,11 @@ async function request(method, path, body, { auth = false } = {}) {
   }
   const text = await res.text()
   const data = text ? JSON.parse(text) : null
+  if (res.status === 401 && auth) {
+    // token missing or expired: sign out everywhere
+    session.clear()
+    window.dispatchEvent(new Event('credchain:signedout'))
+  }
   if (!res.ok) throw new Error(data?.message || `${res.status} ${res.statusText}`)
   return data
 }
@@ -35,8 +54,9 @@ export const api = {
   validate: () => request('GET', '/chain/validate'),
 
   institutions: () => request('GET', '/institutions'),
-  registerInstitution: (body) => request('POST', '/institutions', body),
-  login: (apiKey) => request('POST', '/auth/login', { apiKey }),
+  registerInstitution: (body) => request('POST', '/institutions', body, { auth: true }),
+  login: (email, password) => request('POST', '/auth/login', { email, password }),
+  me: () => request('GET', '/auth/me', undefined, { auth: true }),
 
   recentCredentials: () => request('GET', '/credentials'),
   byStudent: (studentId) => request('GET', `/credentials?studentId=${encodeURIComponent(studentId)}`),

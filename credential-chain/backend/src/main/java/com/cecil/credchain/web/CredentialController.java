@@ -1,7 +1,7 @@
 package com.cecil.credchain.web;
 
 import com.cecil.credchain.credential.*;
-import com.cecil.credchain.institution.InstitutionService;
+import com.cecil.credchain.auth.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,35 +16,38 @@ public class CredentialController {
 
     private final CredentialService credentials;
     private final VerificationService verification;
-    private final InstitutionService institutions;
+    private final AuthService auth;
 
     public CredentialController(CredentialService credentials, VerificationService verification,
-                                InstitutionService institutions) {
+                                AuthService auth) {
         this.credentials = credentials;
         this.verification = verification;
-        this.institutions = institutions;
+        this.auth = auth;
     }
 
     public record RevokeRequest(String reason) {}
 
-    // ---------------- issuer (requires X-API-Key) ----------------
+    // ---------------- issuer (signed-in ISSUER, or X-API-Key) ----------------
 
     @PostMapping("/credentials")
     @ResponseStatus(HttpStatus.CREATED)
-    public CredentialView issue(@RequestHeader(value = "X-API-Key", required = false) String apiKey,
+    public CredentialView issue(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                @RequestHeader(value = "X-API-Key", required = false) String apiKey,
                                 @Valid @RequestBody IssueRequest req) {
-        return credentials.issue(institutions.authenticate(apiKey), req);
+        return credentials.issue(auth.requireIssuer(authorization, apiKey), req);
     }
 
     @PostMapping("/credentials/{id}/revoke")
-    public CredentialView revoke(@RequestHeader(value = "X-API-Key", required = false) String apiKey,
+    public CredentialView revoke(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                @RequestHeader(value = "X-API-Key", required = false) String apiKey,
                                  @PathVariable String id, @RequestBody(required = false) RevokeRequest req) {
-        return credentials.revoke(institutions.authenticate(apiKey), id, req == null ? null : req.reason());
+        return credentials.revoke(auth.requireIssuer(authorization, apiKey), id, req == null ? null : req.reason());
     }
 
     @GetMapping("/credentials/mine")
-    public List<CredentialView> mine(@RequestHeader(value = "X-API-Key", required = false) String apiKey) {
-        return credentials.byIssuer(institutions.authenticate(apiKey).getId());
+    public List<CredentialView> mine(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+        return credentials.byIssuer(auth.requireIssuer(authorization, apiKey).getId());
     }
 
     // ---------------- public ----------------

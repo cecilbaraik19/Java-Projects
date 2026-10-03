@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 /** Seeds a demo issuer and a few credentials on first run so the UI isn't empty. */
 @Component
+@org.springframework.core.annotation.Order(1)
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);

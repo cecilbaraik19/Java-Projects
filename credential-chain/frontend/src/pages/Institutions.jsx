@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Building2, Plus, KeyRound } from 'lucide-react'
-import { api, session } from '../api.js'
+import { Link } from 'react-router-dom'
+import { Building2, Plus, KeyRound, LogIn } from 'lucide-react'
+import { api } from '../api.js'
+import { useAuth } from '../auth.jsx'
 import Hash from '../components/Hash.jsx'
 import { useToast } from '../components/Toast.jsx'
 
 export default function Institutions() {
   const [list, setList] = useState([])
-  const [form, setForm] = useState({ name: '', email: '', website: '' })
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+  const [form, setForm] = useState({ name: '', email: '', website: '', password: '' })
   const [created, setCreated] = useState(null)
   const toast = useToast()
 
@@ -16,9 +20,9 @@ export default function Institutions() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      const res = await api.registerInstitution({ ...form, email: form.email || null })
-      setCreated(res)
-      setForm({ name: '', email: '', website: '' })
+      const res = await api.registerInstitution(form)
+      setCreated({ ...res, password: form.password })
+      setForm({ name: '', email: '', website: '', password: '' })
       toast('Institution registered — its public key is now on the blockchain', 'success')
       load()
     } catch (err) { toast(err.message, 'error') }
@@ -30,26 +34,37 @@ export default function Institutions() {
     <div className="page">
       <header className="page-head"><div><h1>Institutions</h1><p>Trusted issuers. Each one's ECDSA public key is anchored on-chain via a REGISTER_ISSUER transaction.</p></div></header>
 
-      <div className="grid-2">
-        <form className="card form" onSubmit={submit}>
-          <h2><Plus size={18} /> Register an institution</h2>
-          <label>Name<input value={form.name} onChange={set('name')} required /></label>
-          <label>Email<input type="email" value={form.email} onChange={set('email')} /></label>
-          <label>Website<input value={form.website} onChange={set('website')} /></label>
-          <button className="btn primary">Generate keys & register</button>
-        </form>
+      {isAdmin ? (
+        <div className="grid-2">
+          <form className="card form" onSubmit={submit}>
+            <h2><Plus size={18} /> Register an institution</h2>
+            <label>Name<input value={form.name} onChange={set('name')} required /></label>
+            <label>Staff login email<input type="email" value={form.email} onChange={set('email')} required /></label>
+            <label>Staff login password<input type="password" minLength={6} value={form.password} onChange={set('password')} required /></label>
+            <label>Website<input value={form.website} onChange={set('website')} /></label>
+            <button className="btn primary">Generate keys & register</button>
+            <p className="muted small">An ECDSA key pair is generated and the public key is anchored on the blockchain.</p>
+          </form>
 
-        {created ? (
-          <div className="card highlight">
-            <h2><KeyRound size={18} /> Save this API key</h2>
-            <p>It's shown <strong>only once</strong>. {created.institution.name} uses it to sign in to the Issuer Portal.</p>
-            <code className="secret">{created.apiKey}</code>
-            <button className="btn primary" onClick={() => { session.apiKey = created.apiKey; toast('Key saved for this session — open Issuer Portal', 'success') }}>
-              Use it now
-            </button>
-          </div>
-        ) : <div className="card placeholder">A new key pair is generated for each institution.</div>}
-      </div>
+          {created ? (
+            <div className="card highlight">
+              <h2><KeyRound size={18} /> {created.institution.name} is registered</h2>
+              <p>Give these sign-in details to the college's staff:</p>
+              <dl className="details">
+                <dt>Email</dt><dd className="mono">{created.loginEmail}</dd>
+                <dt>Password</dt><dd className="mono">{created.password}</dd>
+              </dl>
+              <p className="muted small" style={{ marginTop: 14 }}>API key for scripts (shown only once):</p>
+              <code className="secret">{created.apiKey}</code>
+            </div>
+          ) : <div className="card placeholder">Each institution gets its own key pair and staff login.</div>}
+        </div>
+      ) : (
+        <div className="card">
+          <p style={{ marginTop: 0 }}>Only the administrator can register new institutions.</p>
+          {!user && <Link className="btn primary" to="/login" state={{ from: '/institutions' }}><LogIn size={16} /> Sign in as admin</Link>}
+        </div>
+      )}
 
       <section className="card">
         <table className="table">

@@ -22,12 +22,41 @@ class CredentialFlowIntegrationTest {
 
     @Test
     void fullCredentialLifecycle() throws Exception {
-        // 1. Register an institution
-        String reg = mvc.perform(post("/api/institutions").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test University\",\"email\":\"reg@test.edu\"}"))
+        // 1. Admin signs in
+        String adminLogin = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@credchain.local\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String adminToken = "Bearer " + mapper.readTree(adminLogin).get("token").asText();
+
+        // 1b. Wrong password is rejected
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@credchain.local\",\"password\":\"wrong\"}"))
+                .andExpect(status().isUnauthorized());
+
+        // 1c. Registering an institution needs the admin
+        String regBody = "{\"name\":\"Test University\",\"email\":\"reg@test.edu\",\"password\":\"secret123\"}";
+        mvc.perform(post("/api/institutions").contentType(MediaType.APPLICATION_JSON).content(regBody))
+                .andExpect(status().isUnauthorized());
+        String reg = mvc.perform(post("/api/institutions").header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(regBody))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String apiKey = mapper.readTree(reg).get("apiKey").asText();
+
+        // 1d. The institution's staff sign in with email + password
+        String staffLogin = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"reg@test.edu\",\"password\":\"secret123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.role").value("ISSUER"))
+                .andReturn().getResponse().getContentAsString();
+        String staffToken = "Bearer " + mapper.readTree(staffLogin).get("token").asText();
+
+        // 1e. Admin cannot issue credentials (wrong role)
+        mvc.perform(post("/api/credentials").header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credentialType\":\"Diploma\",\"studentName\":\"X\",\"studentId\":\"S\",\"program\":\"P\",\"grade\":\"A\"}"))
+                .andExpect(status().isForbidden());
 
         // 2. Issuing without API key is rejected
         String body = "{\"credentialType\":\"Bachelor's Degree\",\"studentName\":\"Cecil\",\"studentId\":\"S-1\","
@@ -40,8 +69,8 @@ class CredentialFlowIntegrationTest {
                         .content(body.replace("2026-06-30", java.time.LocalDate.now().plusDays(5).toString())))
                 .andExpect(status().isBadRequest());
 
-        // 3. Issue
-        String issued = mvc.perform(post("/api/credentials").header("X-API-Key", apiKey)
+        // 3. Issue (signed in as staff)
+        String issued = mvc.perform(post("/api/credentials").header("Authorization", staffToken)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("PENDING"))
@@ -80,7 +109,7 @@ class CredentialFlowIntegrationTest {
         mvc.perform(get("/api/chain/validate")).andExpect(jsonPath("$.valid").value(true));
 
         // 9. Revoke
-        mvc.perform(post("/api/credentials/" + id + "/revoke").header("X-API-Key", apiKey)
+        mvc.perform(post("/api/credentials/" + id + "/revoke").header("Authorization", staffToken)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"Issued in error\"}"))
                 .andExpect(status().isOk());
         mvc.perform(post("/api/chain/mine")).andExpect(status().isOk());
