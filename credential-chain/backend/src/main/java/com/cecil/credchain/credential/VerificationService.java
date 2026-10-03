@@ -79,7 +79,9 @@ public class VerificationService {
                 ? "SHA-256 " + abbreviate(hash) + " matches the blockchain"
                 : "Data was altered: " + abbreviate(hash) + " ≠ on-chain " + abbreviate(onChainHash)));
 
-        // 3. Was it really signed by the issuer whose key is on the chain?
+        // 3. Was THIS data really signed by the issuer whose key is on the chain?
+        //    The signature is checked against the hash of the data we were given,
+        //    so any edit to the data breaks the signature too.
         PublicKey key;
         try {
             key = blockchain.issuerPublicKey(data.issuerId());
@@ -88,10 +90,11 @@ public class VerificationService {
         }
         boolean issuerMatch = data.issuerId() != null && data.issuerId().equals(loc.transaction().getIssuerId());
         boolean sigOk = key != null && issuerMatch && signature != null
-                && KeyUtil.verify(onChainHash, signature, key) && loc.transaction().verifySignature(key);
+                && KeyUtil.verify(hash, signature, key) && loc.transaction().verifySignature(key);
         checks.add(new VerificationResult.Check("Issuer signature (ECDSA)", sigOk, sigOk
                 ? "Signed by " + data.issuerName() + " (" + data.issuerId() + ")"
-                : "Signature does not verify with the issuer's on-chain public key"));
+                : "The issuer's signature does not match this data — it was not signed by "
+                  + (data.issuerName() == null ? "the issuer" : data.issuerName())));
 
         // 4. Revocation
         Optional<TxLocation> revoke = blockchain.findRevocation(data.credentialId());

@@ -35,6 +35,11 @@ class CredentialFlowIntegrationTest {
         mvc.perform(post("/api/credentials").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isUnauthorized());
 
+        // 2b. Future issue dates are rejected
+        mvc.perform(post("/api/credentials").header("X-API-Key", apiKey).contentType(MediaType.APPLICATION_JSON)
+                        .content(body.replace("2026-06-30", java.time.LocalDate.now().plusDays(5).toString())))
+                .andExpect(status().isBadRequest());
+
         // 3. Issue
         String issued = mvc.perform(post("/api/credentials").header("X-API-Key", apiKey)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
@@ -59,7 +64,8 @@ class CredentialFlowIntegrationTest {
         ((com.fasterxml.jackson.databind.node.ObjectNode) forged.get("credential")).put("grade", "10.0 CGPA");
         mvc.perform(post("/api/verify/document").contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(forged)))
-                .andExpect(jsonPath("$.status").value("INVALID"));
+                .andExpect(jsonPath("$.status").value("INVALID"))
+                .andExpect(jsonPath("$.checks[?(@.name == 'Issuer signature (ECDSA)')].passed").value(false));
 
         // 7. Tamper with DB record -> INVALID, restore -> VALID
         mvc.perform(post("/api/demo/tamper-credential/" + id)).andExpect(status().isOk());

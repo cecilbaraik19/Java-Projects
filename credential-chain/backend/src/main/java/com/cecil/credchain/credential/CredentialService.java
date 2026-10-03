@@ -39,6 +39,15 @@ public class CredentialService {
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
         String issueDate = (req.issueDate() == null || req.issueDate().isBlank())
                 ? LocalDate.now().toString() : req.issueDate();
+        LocalDate parsedDate;
+        try {
+            parsedDate = LocalDate.parse(issueDate);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Issue date is not a valid date");
+        }
+        if (parsedDate.isAfter(LocalDate.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Issue date cannot be in the future");
+        }
 
         CredentialData data = new CredentialData(credentialId, req.credentialType().trim(),
                 req.studentName().trim(), req.studentId().trim(), req.program().trim(),

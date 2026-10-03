@@ -7,6 +7,9 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import CredentialCertificate from '../components/CredentialCertificate.jsx'
 
 const TYPES = ["Bachelor's Degree", "Master's Degree", 'Diploma', 'Certificate', 'Transcript', 'Doctorate']
+// Today's date in the user's own timezone, as yyyy-mm-dd (used to block future dates)
+const today = () => new Date().toLocaleDateString('en-CA')
+
 const EMPTY = { credentialType: TYPES[0], studentName: '', studentId: '', program: '', major: '', grade: '', issueDate: '' }
 
 export default function IssuerPortal() {
@@ -105,7 +108,7 @@ export default function IssuerPortal() {
             <label>Major / specialisation<input value={form.major} onChange={set('major')} /></label>
             <label>Grade / CGPA<input value={form.grade} onChange={set('grade')} placeholder="8.9 CGPA" required /></label>
           </div>
-          <label>Issue date<input type="date" value={form.issueDate} onChange={set('issueDate')} /></label>
+          <label>Issue date<input type="date" value={form.issueDate} max={today()} onChange={set('issueDate')} /></label>
           <button className="btn primary" disabled={busy}><Send size={16} /> {busy ? 'Signing…' : 'Sign & issue'}</button>
           <p className="muted small">The record is hashed (SHA-256), signed with your ECDSA private key, and only the hash goes on-chain.</p>
         </form>
