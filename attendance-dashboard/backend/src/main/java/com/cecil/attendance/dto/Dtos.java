@@ -8,6 +8,7 @@ import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.model.LeaveRequest;
 import com.cecil.attendance.model.LeaveType;
 import com.cecil.attendance.model.Role;
+import com.cecil.attendance.model.Shift;
 import com.cecil.attendance.model.UserAccount;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -39,7 +40,8 @@ public final class Dtos {
             @NotBlank @Size(max = 60) String department,
             @Size(max = 80) String designation,
             LocalDate joinDate,
-            Boolean active
+            Boolean active,
+            Long shiftId
     ) {
     }
 
@@ -72,24 +74,29 @@ public final class Dtos {
             double hoursWorked,
             String note,
             String checkInVerification,
-            String checkOutVerification
+            String checkOutVerification,
+            double overtimeHours,
+            String shiftName
     ) {
-        public static AttendanceView of(AttendanceRecord r) {
+        public static AttendanceView of(AttendanceRecord r, double overtimeHours) {
             Employee e = r.getEmployee();
             return new AttendanceView(r.getId(), e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
                     r.getDate(), r.getCheckIn(), r.getCheckOut(), r.getStatus().name(), r.getHoursWorked(), r.getNote(),
-                    r.getCheckInVerification(), r.getCheckOutVerification());
+                    r.getCheckInVerification(), r.getCheckOutVerification(), overtimeHours,
+                    e.getShift() != null ? e.getShift().getName() : null);
         }
 
         public static AttendanceView notMarked(Employee e, LocalDate date) {
             return new AttendanceView(null, e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
-                    date, null, null, "NOT_MARKED", 0, null, null, null);
+                    date, null, null, "NOT_MARKED", 0, null, null, null, 0,
+                    e.getShift() != null ? e.getShift().getName() : null);
         }
     }
 
     public record DashboardStats(
             LocalDate date,
             boolean workingDay,
+            String holidayName,
             long totalEmployees,
             long present,
             long late,
@@ -134,6 +141,7 @@ public final class Dtos {
             long onLeave,
             long absent,
             double totalHours,
+            double overtimeHours,
             double attendanceRate
     ) {
     }
@@ -148,12 +156,31 @@ public final class Dtos {
     }
 
     public record MeView(Long id, String username, String role, Long employeeId,
-                         String employeeName, String department) {
+                         String employeeName, String department, ShiftView shift) {
         public static MeView of(UserAccount u) {
             Employee e = u.getEmployee();
             return new MeView(u.getId(), u.getUsername(), u.getRole().name(),
                     e != null ? e.getId() : null, e != null ? e.getFullName() : null,
-                    e != null ? e.getDepartment() : null);
+                    e != null ? e.getDepartment() : null,
+                    e != null && e.getShift() != null ? ShiftView.of(e.getShift(), 0) : null);
+        }
+    }
+
+    // ---------- Work rules: holidays & shifts ----------
+
+    public record HolidayRequest(@NotNull LocalDate date, @NotBlank @Size(max = 80) String name) {
+    }
+
+    public record ShiftRequest(@NotBlank @Size(max = 40) String name, @NotNull LocalTime startTime,
+                               @NotNull LocalTime endTime, @NotNull @Min(0) @Max(180) Integer graceMinutes,
+                               @NotNull @DecimalMin("1") @DecimalMax("16") Double standardHours) {
+    }
+
+    public record ShiftView(Long id, String name, LocalTime startTime, LocalTime endTime, int graceMinutes,
+                            double standardHours, boolean overnight, long employeeCount) {
+        public static ShiftView of(Shift s, long employeeCount) {
+            return new ShiftView(s.getId(), s.getName(), s.getStartTime(), s.getEndTime(), s.getGraceMinutes(),
+                    s.getStandardHours(), s.isOvernight(), employeeCount);
         }
     }
 

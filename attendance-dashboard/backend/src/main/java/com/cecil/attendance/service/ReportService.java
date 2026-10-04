@@ -29,13 +29,15 @@ public class ReportService {
     private final EmployeeRepository employees;
     private final AttendanceProperties props;
     private final Clock clock;
+    private final WorkCalendar calendar;
 
     public ReportService(AttendanceRepository attendance, EmployeeRepository employees,
-                         AttendanceProperties props, Clock clock) {
+                         AttendanceProperties props, Clock clock, WorkCalendar calendar) {
         this.attendance = attendance;
         this.employees = employees;
         this.props = props;
         this.clock = clock;
+        this.calendar = calendar;
     }
 
     /** Active employees, optionally limited to one department (null = all). */
@@ -63,7 +65,7 @@ public class ReportService {
 
         long stillIn = records.stream().filter(r -> r.getCheckIn() != null && r.getCheckOut() == null).count();
 
-        return new DashboardStats(date, props.isWorkingDay(date), c.total, c.present, c.late, c.halfDay,
+        return new DashboardStats(date, calendar.isWorkingDay(date), calendar.holidayName(date), c.total, c.present, c.late, c.halfDay,
                 c.onLeave, c.absent, stillIn, c.rate(), avgCheckIn);
     }
 
@@ -75,7 +77,7 @@ public class ReportService {
         dates.add(today);
         LocalDate d = today.minusDays(1);
         while (dates.size() < days) {
-            if (props.isWorkingDay(d)) dates.add(d);
+            if (calendar.isWorkingDay(d)) dates.add(d);
             d = d.minusDays(1);
         }
         Collections.reverse(dates);
@@ -121,27 +123,29 @@ public class ReportService {
 
             LocalDate start = (e.getJoinDate() != null && e.getJoinDate().isAfter(from)) ? e.getJoinDate() : from;
             long workingDays = start.isAfter(end) ? 0
-                    : start.datesUntil(end.plusDays(1)).filter(props::isWorkingDay).count();
+                    : calendar.workingDays(start, end).size();
             // weekend days that do have records (e.g. today on a Sunday) still count
-            long extra = recs.stream().filter(r -> !props.isWorkingDay(r.getDate())).count();
+            long extra = recs.stream().filter(r -> !calendar.isWorkingDay(r.getDate())).count();
             Counts c = Counts.of(recs, workingDays + extra);
             double hours = recs.stream().mapToDouble(AttendanceRecord::getHoursWorked).sum();
+            double overtime = recs.stream().mapToDouble(calendar::overtimeHours).sum();
 
             out.add(new EmployeeSummary(e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
                     c.total, c.present, c.late, c.halfDay, c.onLeave, c.absent,
-                    Math.round(hours * 10) / 10.0, c.rate()));
+                    Math.round(hours * 10) / 10.0, Math.round(overtime * 10) / 10.0, c.rate()));
         }
         return out;
     }
 
     public String summaryCsv(LocalDate from, LocalDate to, String department) {
         StringBuilder sb = new StringBuilder(
-                "Code,Name,Department,Working Days,Present,Late,Half Day,On Leave,Absent,Total Hours,Attendance %\n");
+                "Code,Name,Department,Working Days,Present,Late,Half Day,On Leave,Absent,Total Hours,Overtime Hours,Attendance %\n");
         for (EmployeeSummary s : summary(from, to, department)) {
             sb.append(csv(s.employeeCode())).append(',').append(csv(s.employeeName())).append(',')
                     .append(csv(s.department())).append(',').append(s.workingDays()).append(',')
                     .append(s.present()).append(',').append(s.late()).append(',').append(s.halfDay()).append(',')
                     .append(s.onLeave()).append(',').append(s.absent()).append(',').append(s.totalHours()).append(',')
+                    .append(s.overtimeHours()).append(',')
                     .append(s.attendanceRate()).append('\n');
         }
         return sb.toString();

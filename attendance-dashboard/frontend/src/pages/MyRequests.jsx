@@ -9,7 +9,7 @@ import { IconCalendar, IconEdit, IconPlus } from '../components/Icons.jsx';
 const range = (a, b) => (a === b ? fmtDate(a, { day: 'numeric', month: 'short', year: 'numeric' })
   : `${fmtDate(a)} – ${fmtDate(b, { day: 'numeric', month: 'short', year: 'numeric' })}`);
 
-function ApplyLeaveModal({ balances, onClose, onSaved }) {
+function ApplyLeaveModal({ balances, holidays, onClose, onSaved }) {
   const toast = useToast();
   const minDate = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return toIso(d); })();
   const [form, setForm] = useState({ type: 'CASUAL', fromDate: nextWorkdayIso(), toDate: nextWorkdayIso(), reason: '' });
@@ -20,7 +20,7 @@ function ApplyLeaveModal({ balances, onClose, onSaved }) {
     if (k === 'fromDate' && next.toDate < next.fromDate) next.toDate = next.fromDate;
     setForm(next);
   };
-  const days = countWeekdays(form.fromDate, form.toDate);
+  const days = countWeekdays(form.fromDate, form.toDate, new Set(holidays.map((h) => h.date)));
   const bal = balances.find((b) => b.type === form.type);
   const left = bal?.remaining == null ? null : bal.remaining - bal.pending;
 
@@ -72,6 +72,14 @@ export default function MyRequests() {
   const [corrections, setCorrections] = useState(null);
   const [applying, setApplying] = useState(false);
   const [correcting, setCorrecting] = useState(false);
+  const [holidays, setHolidays] = useState([]);
+
+  useEffect(() => {
+    const y = new Date().getFullYear();
+    Promise.all([api.holidays(y), api.holidays(y + 1)])
+      .then(([a, b]) => setHolidays([...new Map([...a, ...b].map((h) => [h.id, h])).values()]))
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -167,7 +175,21 @@ export default function MyRequests() {
         </div>
       </section>
 
-      {applying && <ApplyLeaveModal balances={balances} onClose={() => setApplying(false)} onSaved={() => { setApplying(false); load(); }} />}
+      <section className="card" style={{ marginTop: 18 }}>
+        <div className="card-head"><div><h2>Upcoming holidays</h2><p>These days don't count against your leave</p></div></div>
+        <div className="holiday-chips">
+          {holidays.filter((h) => h.date >= todayIso()).slice(0, 8).map((h) => (
+            <div key={h.id} className="holiday-chip">
+              <strong className="tabular">{fmtDate(h.date, { day: 'numeric', month: 'short' })}</strong>
+              <span>{h.name}</span>
+              <small className="muted">{fmtDate(h.date, { weekday: 'long' })}</small>
+            </div>
+          ))}
+          {!holidays.some((h) => h.date >= todayIso()) && <span className="muted">No upcoming holidays have been added yet.</span>}
+        </div>
+      </section>
+
+      {applying && <ApplyLeaveModal balances={balances} holidays={holidays} onClose={() => setApplying(false)} onSaved={() => { setApplying(false); load(); }} />}
       {correcting && <CorrectionModal onClose={() => setCorrecting(false)} onSaved={() => { setCorrecting(false); load(); }} />}
     </>
   );

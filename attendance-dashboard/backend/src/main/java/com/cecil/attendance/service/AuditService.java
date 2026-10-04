@@ -40,6 +40,11 @@ public class AuditService {
     public static final String CORRECTION_CANCELLED = "CORRECTION_CANCELLED";
     public static final String CHECK_IN_REJECTED = "CHECK_IN_REJECTED";
     public static final String SETTINGS_UPDATED = "SETTINGS_UPDATED";
+    public static final String HOLIDAY_ADDED = "HOLIDAY_ADDED";
+    public static final String HOLIDAY_UPDATED = "HOLIDAY_UPDATED";
+    public static final String HOLIDAY_DELETED = "HOLIDAY_DELETED";
+    public static final String SHIFT_SAVED = "SHIFT_SAVED";
+    public static final String SHIFT_DELETED = "SHIFT_DELETED";
 
     private final AuditLogRepository repo;
     private final ClientIpResolver ipResolver;

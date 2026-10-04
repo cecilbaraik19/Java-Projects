@@ -49,11 +49,12 @@ public class AttendanceRecord {
         this.status = status;
     }
 
-    /** Hours worked, or 0 if not checked out yet. */
+    /** Hours worked, or 0 if not checked out yet. A check-out earlier than the check-in means the next day (night shift). */
     public double getHoursWorked() {
         if (checkIn == null || checkOut == null) return 0;
         long minutes = Duration.between(checkIn, checkOut).toMinutes();
-        return Math.max(0, Math.round(minutes / 6.0) / 10.0);
+        if (minutes < 0) minutes += 24 * 60;
+        return Math.round(minutes / 6.0) / 10.0;
     }
 
     public Long getId() { return id; }

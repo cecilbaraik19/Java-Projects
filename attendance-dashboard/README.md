@@ -22,6 +22,10 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
   - **Office network** – only allowed IPs / CIDR ranges. `X-Forwarded-For` is only trusted from local proxies (`attendance.security.trusted-proxies`), so it can't be spoofed from outside.
   - Every blocked attempt is written to the audit log as *Check-in rejected*; each record shows how it was verified (e.g. `Self · IP 192.168.1.20 · GPS 42 m · QR`).
 
+- **Holidays** (admin → *Holidays & shifts*) – holidays are not working days: nobody is marked absent, leave over a holiday doesn't use balance, and reports skip them. "Add national holidays" adds 26 Jan, 15 Aug, 2 Oct and 25 Dec; add festivals (Holi, Diwali, Eid…) yourself since their dates change yearly.
+- **Shifts** – Morning 06:00–14:00, General 09:30–18:00 and Night 22:00–06:00 are created on first start; add your own. Assign one per employee on the Employees page. *Late* is judged against the employee's shift start + grace; night shifts may check out after midnight. Staff without a shift use `attendance.office-start` and `attendance.standard-hours`.
+- **Overtime** – hours beyond the shift's standard hours; every hour on a weekend or holiday counts as overtime. Shown on My Attendance, in Reports and in the CSV export.
+
 ### Testing QR / GPS check-in on a phone
 
 Phones only allow the camera and GPS on **https** pages, so start the frontend in phone mode:
@@ -147,6 +151,10 @@ All endpoints except login need the header `Authorization: Bearer <token>`.
 | GET / PUT | `/api/settings/checkin` | Check-in security rules (admin) |
 | GET | `/api/settings/client-ip` | IP the server sees for you (admin) |
 | GET | `/api/kiosk/code` | Current rotating QR code (admin/manager) |
+| GET | `/api/holidays?year=` | Holidays for a year (everyone) |
+| POST / PUT / DELETE | `/api/holidays[/{id}]` | Manage holidays (admin) |
+| POST | `/api/holidays/national?year=` | Add fixed national holidays (admin) |
+| GET / POST / PUT / DELETE | `/api/shifts[/{id}]` | List (admin/manager) / manage shifts (admin) |
 | GET | `/api/employees?activeOnly=false` | List employees |
 | GET | `/api/employees/departments` | Department names |
 | POST / PUT / DELETE | `/api/employees[/{id}]` | Create / update / delete employee |

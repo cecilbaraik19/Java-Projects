@@ -22,6 +22,7 @@ import Login from './pages/Login.jsx';
 import Kiosk from './pages/Kiosk.jsx';
 import QrCheckIn from './pages/QrCheckIn.jsx';
 import CheckInSecurity from './pages/CheckInSecurity.jsx';
+import WorkRules from './pages/WorkRules.jsx';
 
 // Full-screen pages without the sidebar
 const BARE = [
@@ -40,6 +41,7 @@ function buildNav(refreshCounts) {
     { to: '/my', label: 'My Attendance', icon: IconCalendar, roles: ['EMPLOYEE', 'MANAGER'], element: <MyAttendance /> },
     { to: '/requests', label: 'My Requests', icon: IconEdit, roles: ['EMPLOYEE', 'MANAGER'], element: <MyRequests /> },
     { to: '/users', label: 'Users', icon: IconShield, roles: ['ADMIN'], element: <Users /> },
+    { to: '/work-rules', label: 'Holidays & shifts', icon: IconCalendar, roles: ['ADMIN'], element: <WorkRules /> },
     { to: '/security', label: 'Check-in security', icon: IconLock, roles: ['ADMIN'], element: <CheckInSecurity /> },
     { to: '/audit', label: 'Audit log', icon: IconList, roles: ['ADMIN'], element: <AuditLog /> },
   ];

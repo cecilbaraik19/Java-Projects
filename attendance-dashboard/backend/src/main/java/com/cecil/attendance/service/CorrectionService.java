@@ -28,9 +28,11 @@ public class CorrectionService {
     private final AuditService audit;
     private final AccessGuard guard;
     private final Clock clock;
+    private final WorkCalendar calendar;
 
     public CorrectionService(CorrectionRequestRepository repo, EmployeeService employees, AttendanceService attendance,
-                             AuditService audit, AccessGuard guard, Clock clock) {
+                             AuditService audit, AccessGuard guard, Clock clock, WorkCalendar calendar) {
+        this.calendar = calendar;
         this.repo = repo;
         this.employees = employees;
         this.attendance = attendance;
@@ -52,7 +54,7 @@ public class CorrectionService {
         if (req.date().isBefore(today.minusDays(MAX_DAYS_IN_PAST))) {
             throw ApiException.badRequest("Corrections can only be requested for the last " + MAX_DAYS_IN_PAST + " days");
         }
-        if (req.checkOut() != null && !req.checkOut().isAfter(req.checkIn())) {
+        if (req.checkOut() != null && !req.checkOut().isAfter(req.checkIn()) && !calendar.rulesFor(emp).overnight()) {
             throw ApiException.badRequest("Check-out must be after check-in");
         }
         if (repo.existsByEmployeeIdAndDateAndStatus(employeeId, req.date(), RequestStatus.PENDING)) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, buildProof, fmtDate, fmtTime, toIso, todayIso } from '../api.js';
+import { api, buildProof, fmtDate, fmtShift, fmtTime, toIso, todayIso } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useToast } from '../components/Toast.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -86,6 +86,7 @@ export default function MyAttendance() {
   const count = (s) => list.filter((r) => r.status === s).length;
   const attended = count('PRESENT') + count('LATE') + count('HALF_DAY');
   const hours = list.reduce((s, r) => s + r.hoursWorked, 0);
+  const overtime = list.reduce((s, r) => s + (r.overtimeHours || 0), 0);
   const today = list.find((r) => r.date === todayIso());
 
   return (
@@ -93,7 +94,7 @@ export default function MyAttendance() {
       <div className="page-head">
         <div>
           <h1>My Attendance</h1>
-          <p>{user.employeeName}{user.department ? ` · ${user.department}` : ''}</p>
+          <p>{user.employeeName}{user.department ? ` · ${user.department}` : ''} · Shift: {fmtShift(user.shift)}</p>
         </div>
         <div className="seg" role="group" aria-label="Period">
           {RANGES.map(([d, l]) => <button key={d} aria-pressed={days === d} onClick={() => setDays(d)}>{l}</button>)}
@@ -109,6 +110,7 @@ export default function MyAttendance() {
         <div className="card stat"><div className="stat-label">Late arrivals</div><div className="stat-value">{count('LATE')}</div></div>
         <div className="card stat"><div className="stat-label">Leave days</div><div className="stat-value">{count('ON_LEAVE')}</div></div>
         <div className="card stat"><div className="stat-label">Hours worked</div><div className="stat-value">{Math.round(hours)}</div></div>
+        <div className="card stat"><div className="stat-label">Overtime</div><div className="stat-value">{overtime.toFixed(1)} h</div></div>
       </div>
 
       <section className="card">
@@ -118,7 +120,7 @@ export default function MyAttendance() {
         </div>
         <div className="table-wrap" style={{ marginTop: 8 }}>
           <table>
-            <thead><tr><th>Date</th><th>Check in</th><th>Check out</th><th className="num">Hours</th><th>Status</th><th>Note</th><th className="num"></th></tr></thead>
+            <thead><tr><th>Date</th><th>Check in</th><th>Check out</th><th className="num">Hours</th><th className="num">Overtime</th><th>Status</th><th>Note</th><th className="num"></th></tr></thead>
             <tbody>
               {list.map((r) => (
                 <tr key={r.id}>
@@ -126,6 +128,7 @@ export default function MyAttendance() {
                   <td className="tabular">{fmtTime(r.checkIn)}</td>
                   <td className="tabular">{fmtTime(r.checkOut)}</td>
                   <td className="num">{r.hoursWorked ? r.hoursWorked.toFixed(1) : '—'}</td>
+                  <td className="num">{r.overtimeHours ? `+${r.overtimeHours.toFixed(1)}` : '—'}</td>
                   <td><StatusBadge status={r.status} /></td>
                   <td className="muted" style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.note ?? ''}</td>
                   <td className="num">
@@ -136,8 +139,8 @@ export default function MyAttendance() {
                   </td>
                 </tr>
               ))}
-              {rows && !list.length && <tr><td colSpan="7" className="empty">No records in this period</td></tr>}
-              {!rows && <tr><td colSpan="7" className="empty">Loading…</td></tr>}
+              {rows && !list.length && <tr><td colSpan="8" className="empty">No records in this period</td></tr>}
+              {!rows && <tr><td colSpan="8" className="empty">Loading…</td></tr>}
             </tbody>
           </table>
         </div>

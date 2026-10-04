@@ -60,8 +60,8 @@ class AttendanceServiceTest {
     void setUp() {
         attendanceRepo.deleteAll();
         employeeRepo.deleteAll();
-        alice = employeeService.create(new EmployeeRequest("e1", "Alice", "alice@x.com", "Engineering", "Dev", null, true));
-        bob = employeeService.create(new EmployeeRequest("e2", "Bob", "bob@x.com", "Sales", "Rep", null, true));
+        alice = employeeService.create(new EmployeeRequest("e1", "Alice", "alice@x.com", "Engineering", "Dev", null, true, null));
+        bob = employeeService.create(new EmployeeRequest("e2", "Bob", "bob@x.com", "Sales", "Rep", null, true, null));
     }
 
     @Test
@@ -95,7 +95,7 @@ class AttendanceServiceTest {
 
     @Test
     void statsCountAbsentAndExcludeLeaveFromRate() {
-        Employee carol = employeeService.create(new EmployeeRequest("e3", "Carol", "c@x.com", "HR", null, null, true));
+        Employee carol = employeeService.create(new EmployeeRequest("e3", "Carol", "c@x.com", "HR", null, null, true, null));
         NOW.set(LocalTime.of(9, 0));
         attendance.checkIn(alice.getId());
         attendance.saveManual(new ManualEntryRequest(carol.getId(), DAY, AttendanceStatus.ON_LEAVE, null, null, "Sick"));
@@ -128,7 +128,7 @@ class AttendanceServiceTest {
     @Test
     void duplicateEmployeeCodeIsRejected() {
         assertThatThrownBy(() -> employeeService.create(
-                new EmployeeRequest("E1", "Other", "o@x.com", "HR", null, null, true)))
+                new EmployeeRequest("E1", "Other", "o@x.com", "HR", null, null, true, null)))
                 .hasMessageContaining("already exists");
     }
 
@@ -147,7 +147,7 @@ class AttendanceServiceTest {
 
     @Test
     void csvEscapesFormulaInjection() {
-        employeeService.create(new EmployeeRequest("e9", "=HYPERLINK(\"x\")", "h@x.com", "HR", null, null, true));
+        employeeService.create(new EmployeeRequest("e9", "=HYPERLINK(\"x\")", "h@x.com", "HR", null, null, true, null));
         assertThat(reports.summaryCsv(DAY, DAY, null)).contains("\"'=HYPERLINK(\"\"x\"\")\"");
     }
 }

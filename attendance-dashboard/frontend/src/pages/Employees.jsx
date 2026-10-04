@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, fmtDate, fmtTime, toIso, todayIso } from '../api.js';
+import { api, fmtDate, fmtShift, fmtTime, toIso, todayIso } from '../api.js';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../auth.jsx';
 import Modal from '../components/Modal.jsx';
@@ -9,9 +9,10 @@ import { IconCalendar, IconEdit, IconPlus, IconTrash } from '../components/Icons
 
 const EMPTY = { employeeCode: '', fullName: '', email: '', department: '', designation: '', joinDate: '', active: true };
 
-function EmployeeForm({ initial, departments, onClose, onSaved }) {
+function EmployeeForm({ initial, departments, shifts, onClose, onSaved }) {
   const toast = useToast();
-  const [form, setForm] = useState({ ...EMPTY, ...initial, joinDate: initial?.joinDate ?? '', designation: initial?.designation ?? '' });
+  const [form, setForm] = useState({ ...EMPTY, ...initial, joinDate: initial?.joinDate ?? '', designation: initial?.designation ?? '',
+    shiftId: initial?.shift?.id ?? '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
@@ -19,7 +20,9 @@ function EmployeeForm({ initial, departments, onClose, onSaved }) {
   const save = async (e) => {
     e?.preventDefault();
     setSaving(true); setError('');
-    const body = { ...form, joinDate: form.joinDate || null, designation: form.designation || null };
+    const body = { ...form, joinDate: form.joinDate || null, designation: form.designation || null,
+      shiftId: form.shiftId ? Number(form.shiftId) : null };
+    delete body.shift;
     try {
       initial?.id ? await api.updateEmployee(initial.id, body) : await api.createEmployee(body);
       toast(initial?.id ? 'Employee updated' : 'Employee added');
@@ -47,6 +50,11 @@ function EmployeeForm({ initial, departments, onClose, onSaved }) {
           <datalist id="dept-list">{departments.map((d) => <option key={d} value={d} />)}</datalist></div>
         <div className="field"><label htmlFor="des">Designation</label>
           <input id="des" className="input" value={form.designation} onChange={set('designation')} maxLength={80} /></div>
+        <div className="field"><label htmlFor="sh">Shift</label>
+          <select id="sh" className="select" value={form.shiftId} onChange={set('shiftId')}>
+            <option value="">Default hours</option>
+            {shifts.map((s) => <option key={s.id} value={s.id}>{fmtShift(s)}</option>)}
+          </select></div>
         <div className="field"><label htmlFor="jd">Join date</label>
           <input id="jd" type="date" className="input" value={form.joinDate} onChange={set('joinDate')} max={todayIso()} /></div>
         <div className="field" style={{ justifyContent: 'flex-end' }}>
@@ -111,11 +119,12 @@ export default function Employees() {
   const [editing, setEditing] = useState(null);   // {} for new, employee for edit
   const [deleting, setDeleting] = useState(null);
   const [history, setHistory] = useState(null);
+  const [shifts, setShifts] = useState([]);
 
   const load = useCallback(async () => {
     try {
-      const [e, d] = await Promise.all([api.employees(), api.departments()]);
-      setList(e); setDepartments(d);
+      const [e, d, s] = await Promise.all([api.employees(), api.departments(), api.shifts().catch(() => [])]);
+      setList(e); setDepartments(d); setShifts(s);
     } catch (err) { toast(err.message, 'error'); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
@@ -146,13 +155,14 @@ export default function Employees() {
         </div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Employee</th><th>Code</th><th>Department</th><th>Email</th><th>Joined</th><th>Status</th><th className="num">Actions</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Code</th><th>Department</th><th>Shift</th><th>Email</th><th>Joined</th><th>Status</th><th className="num">Actions</th></tr></thead>
             <tbody>
               {filtered.map((e) => (
                 <tr key={e.id}>
                   <td><Person name={e.fullName} sub={e.designation} /></td>
                   <td className="muted tabular">{e.employeeCode}</td>
                   <td>{e.department}</td>
+                  <td className="muted">{e.shift ? fmtShift(e.shift) : 'Default'}</td>
                   <td className="muted">{e.email}</td>
                   <td className="muted">{e.joinDate ? fmtDate(e.joinDate, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
                   <td>{e.active ? <span className="badge PRESENT">Active</span> : <span className="badge inactive">Inactive</span>}</td>
@@ -171,7 +181,7 @@ export default function Employees() {
         </div>
       </section>
 
-      {editing && <EmployeeForm initial={editing} departments={departments} onClose={() => setEditing(null)}
+      {editing && <EmployeeForm initial={editing} departments={departments} shifts={shifts} onClose={() => setEditing(null)}
                                 onSaved={() => { setEditing(null); load(); }} />}
       {history && <HistoryModal employee={history} onClose={() => setHistory(null)} />}
       {deleting && (

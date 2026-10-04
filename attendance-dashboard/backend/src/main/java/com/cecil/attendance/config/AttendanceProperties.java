@@ -14,9 +14,11 @@ public record AttendanceProperties(
         double halfDayHours,
         boolean seedDemoData,
         List<String> corsOrigins,
-        List<DayOfWeek> weekendDays
+        List<DayOfWeek> weekendDays,
+        Double standardHours
 ) {
     public AttendanceProperties {
+        if (standardHours == null || standardHours <= 0) standardHours = 8.0;
         if (weekendDays == null) weekendDays = List.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
         if (officeStart == null || officeStart.isBlank()) officeStart = "09:30";
         if (lateGraceMinutes <= 0) lateGraceMinutes = 15;
@@ -24,6 +26,7 @@ public record AttendanceProperties(
         if (corsOrigins == null || corsOrigins.isEmpty()) corsOrigins = List.of("http://localhost:5173");
     }
 
+    /** Weekday check only - use WorkCalendar to also exclude holidays. */
     public boolean isWorkingDay(LocalDate date) {
         return !weekendDays.contains(date.getDayOfWeek());
     }

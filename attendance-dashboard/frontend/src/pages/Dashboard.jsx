@@ -75,7 +75,9 @@ export default function Dashboard() {
 
       {error && <div className="card card-pad error-text" style={{ marginBottom: 18 }}>{error}</div>}
       {stats && !stats.workingDay && (
-        <div className="card card-pad muted" style={{ marginBottom: 18 }}>Today is a weekend — attendance is optional.</div>
+        <div className="card card-pad muted" style={{ marginBottom: 18 }}>
+          {stats.holidayName ? <>Today is a holiday — <strong>{stats.holidayName}</strong>. Attendance is optional.</> : 'Today is a weekend — attendance is optional.'}
+        </div>
       )}
 
       <div className="stats">

@@ -70,6 +70,17 @@ export const api = {
   saveCheckInSettings: (data) => request('/settings/checkin', { method: 'PUT', body: data }),
   clientIp: () => request('/settings/client-ip'),
   kioskCode: () => request('/kiosk/code'),
+
+  // holidays & shifts
+  holidays: (year) => request(`/holidays?${qs({ year })}`),
+  addHoliday: (data) => request('/holidays', { method: 'POST', body: data }),
+  updateHoliday: (id, data) => request(`/holidays/${id}`, { method: 'PUT', body: data }),
+  deleteHoliday: (id) => request(`/holidays/${id}`, { method: 'DELETE' }),
+  addNationalHolidays: (year) => request(`/holidays/national?year=${year}`, { method: 'POST' }),
+  shifts: () => request('/shifts'),
+  createShift: (data) => request('/shifts', { method: 'POST', body: data }),
+  updateShift: (id, data) => request(`/shifts/${id}`, { method: 'PUT', body: data }),
+  deleteShift: (id) => request(`/shifts/${id}`, { method: 'DELETE' }),
   myLeaveBalance: (year) => request(`/me/leave-balance?${qs({ year })}`),
   myLeave: () => request('/me/leave-requests'),
   applyLeave: (data) => request('/me/leave-requests', { method: 'POST', body: data }),
@@ -140,16 +151,19 @@ export const ROLE_LABEL = { ADMIN: 'Admin', MANAGER: 'Manager', EMPLOYEE: 'Emplo
 export const LEAVE_LABEL = { CASUAL: 'Casual', SICK: 'Sick', EARNED: 'Earned', UNPAID: 'Unpaid' };
 export const REQUEST_LABEL = { PENDING: 'Pending', APPROVED: 'Approved', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
 
-/** Mon–Fri days between two ISO dates (inclusive) – a preview; the server is the source of truth. */
-export function countWeekdays(fromIso, toIso) {
+/** Mon–Fri days between two ISO dates (inclusive), minus holidays – a preview; the server decides. */
+export function countWeekdays(fromIso, toIso, holidayDates = new Set()) {
   if (!fromIso || !toIso || toIso < fromIso) return 0;
   let n = 0;
   for (let d = new Date(fromIso + 'T00:00:00'); toIso >= toIsoDate(d); d.setDate(d.getDate() + 1)) {
     const wd = d.getDay();
-    if (wd !== 0 && wd !== 6) n++;
+    if (wd !== 0 && wd !== 6 && !holidayDates.has(toIsoDate(d))) n++;
   }
   return n;
 }
+
+/** "Morning 06:00–14:00" */
+export const fmtShift = (s) => (s ? `${s.name} ${s.startTime.slice(0, 5)}–${s.endTime.slice(0, 5)}` : 'Default hours');
 function toIsoDate(d) { return toIso(d); }
 
 /** Current GPS position as { latitude, longitude, accuracy } (asks the browser for permission). */

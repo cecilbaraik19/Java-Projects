@@ -24,6 +24,7 @@ const COLUMNS = [
   { key: 'onLeave', label: 'Leave', num: true },
   { key: 'absent', label: 'Absent', num: true },
   { key: 'totalHours', label: 'Hours', num: true },
+  { key: 'overtimeHours', label: 'Overtime', num: true },
   { key: 'attendanceRate', label: 'Attendance', num: true },
 ];
 
@@ -53,7 +54,8 @@ export default function Reports() {
 
   const totals = sorted.reduce((t, r) => ({
     late: t.late + r.late, absent: t.absent + r.absent, hours: t.hours + r.totalHours, rate: t.rate + r.attendanceRate,
-  }), { late: 0, absent: 0, hours: 0, rate: 0 });
+    ot: t.ot + r.overtimeHours,
+  }), { late: 0, absent: 0, hours: 0, rate: 0, ot: 0 });
 
   const toggleSort = (key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }));
 
@@ -72,6 +74,8 @@ export default function Reports() {
         <div className="card stat"><div className="stat-label">Late arrivals</div><div className="stat-value">{totals.late}</div></div>
         <div className="card stat"><div className="stat-label">Absences</div><div className="stat-value">{totals.absent}</div></div>
         <div className="card stat"><div className="stat-label">Hours logged</div><div className="stat-value">{Math.round(totals.hours).toLocaleString('en-IN')}</div></div>
+        <div className="card stat"><div className="stat-label">Overtime</div><div className="stat-value">{Math.round(totals.ot).toLocaleString('en-IN')} h</div>
+          <div className="stat-sub">Beyond shift hours, plus weekend &amp; holiday work</div></div>
       </div>
 
       <section className="card">
@@ -114,6 +118,7 @@ export default function Reports() {
                   <td className="num">{r.onLeave}</td>
                   <td className="num">{r.absent}</td>
                   <td className="num">{r.totalHours.toFixed(1)}</td>
+                  <td className="num">{r.overtimeHours ? r.overtimeHours.toFixed(1) : '—'}</td>
                   <td className="num">
                     <span className="bar-track"><span className="bar-fill" style={{ width: `${r.attendanceRate}%`, display: 'block' }} /></span>
                     {r.attendanceRate.toFixed(1)}%

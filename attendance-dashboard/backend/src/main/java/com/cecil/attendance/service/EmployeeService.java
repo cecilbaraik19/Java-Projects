@@ -6,6 +6,7 @@ import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.repository.AttendanceRepository;
 import com.cecil.attendance.repository.CorrectionRequestRepository;
 import com.cecil.attendance.repository.LeaveRequestRepository;
+import com.cecil.attendance.repository.ShiftRepository;
 import com.cecil.attendance.repository.EmployeeRepository;
 import com.cecil.attendance.repository.UserAccountRepository;
 import com.cecil.attendance.security.AccessGuard;
@@ -22,11 +23,13 @@ public class EmployeeService {
     private final UserAccountRepository users;
     private final LeaveRequestRepository leaves;
     private final CorrectionRequestRepository corrections;
+    private final ShiftRepository shifts;
     private final AuditService audit;
 
     public EmployeeService(EmployeeRepository employees, AttendanceRepository attendance,
                            UserAccountRepository users, LeaveRequestRepository leaves,
-                           CorrectionRequestRepository corrections, AuditService audit) {
+                           CorrectionRequestRepository corrections, ShiftRepository shifts, AuditService audit) {
+        this.shifts = shifts;
         this.employees = employees;
         this.attendance = attendance;
         this.users = users;
@@ -110,5 +113,7 @@ public class EmployeeService {
         e.setDesignation(req.designation() == null ? null : req.designation().trim());
         e.setJoinDate(req.joinDate());
         if (req.active() != null) e.setActive(req.active());
+        e.setShift(req.shiftId() == null ? null : shifts.findById(req.shiftId())
+                .orElseThrow(() -> ApiException.badRequest("Shift " + req.shiftId() + " not found")));
     }
 }

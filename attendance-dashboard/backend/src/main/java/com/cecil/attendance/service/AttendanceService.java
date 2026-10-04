@@ -33,21 +33,37 @@ public class AttendanceService {
     private final AttendanceProperties props;
     private final Clock clock;
     private final AuditService audit;
+    private final WorkCalendar calendar;
 
     public AttendanceService(AttendanceRepository attendance, EmployeeRepository employees,
                              EmployeeService employeeService, AttendanceProperties props, Clock clock,
-                             AuditService audit) {
+                             AuditService audit, WorkCalendar calendar) {
         this.attendance = attendance;
         this.employees = employees;
         this.employeeService = employeeService;
         this.props = props;
         this.clock = clock;
         this.audit = audit;
+        this.calendar = calendar;
     }
 
-    /** Status decided purely from the check-in time. */
-    public AttendanceStatus statusForCheckIn(LocalTime checkIn) {
-        return checkIn.isAfter(props.lateAfter()) ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
+    /** PRESENT or LATE, judged against the employee's own shift start + grace period. */
+    public AttendanceStatus statusForCheckIn(Employee emp, LocalTime checkIn) {
+        WorkCalendar.ShiftRules rules = calendar.rulesFor(emp);
+        boolean late = checkIn.isAfter(rules.lateAfter());
+        if (rules.overnight() && checkIn.isBefore(rules.end())) {
+            late = true; // night shift: arriving after midnight is late
+        }
+        return late ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
+    }
+
+    /** View with overtime calculated from the employee's shift and the holiday calendar. */
+    public AttendanceView view(AttendanceRecord r) {
+        return AttendanceView.of(r, calendar.overtimeHours(r));
+    }
+
+    private boolean checkOutMayBeBeforeCheckIn(Employee emp) {
+        return calendar.rulesFor(emp).overnight();
     }
 
     @Transactional
@@ -73,12 +89,12 @@ public class AttendanceService {
             throw ApiException.conflict(emp.getFullName() + " is on leave today");
         }
         rec.setCheckIn(now);
-        rec.setStatus(statusForCheckIn(now));
+        rec.setStatus(statusForCheckIn(emp, now));
         rec.setCheckInVerification(verification != null ? verification : markedBy());
         AttendanceRecord saved = attendance.save(rec);
         audit.log(AuditService.CHECK_IN, "Attendance", saved.getId(),
                 emp.getEmployeeCode() + " at " + now + " (" + saved.getStatus() + ")");
-        return AttendanceView.of(saved);
+        return view(saved);
     }
 
     @Transactional
@@ -94,7 +110,14 @@ public class AttendanceService {
 
         AttendanceRecord rec = attendance.findByEmployeeIdAndDate(employeeId, today)
                 .filter(r -> r.getCheckIn() != null)
-                .orElseThrow(() -> ApiException.conflict(emp.getFullName() + " has not checked in today"));
+                .orElse(null);
+        // Night shift: checking out after midnight closes yesterday's record
+        if ((rec == null || rec.getCheckOut() != null) && calendar.rulesFor(emp).overnight()) {
+            AttendanceRecord y = attendance.findByEmployeeIdAndDate(employeeId, today.minusDays(1))
+                    .filter(r -> r.getCheckIn() != null && r.getCheckOut() == null).orElse(null);
+            if (y != null) rec = y;
+        }
+        if (rec == null) throw ApiException.conflict(emp.getFullName() + " has not checked in today");
         if (rec.getCheckOut() != null) {
             throw ApiException.conflict(emp.getFullName() + " already checked out at " + rec.getCheckOut());
         }
@@ -106,7 +129,7 @@ public class AttendanceService {
         AttendanceRecord saved = attendance.save(rec);
         audit.log(AuditService.CHECK_OUT, "Attendance", saved.getId(),
                 emp.getEmployeeCode() + " at " + now + " (" + saved.getHoursWorked() + " h)");
-        return AttendanceView.of(saved);
+        return view(saved);
     }
 
     /** "Marked by manager" style label for attendance entered on someone's behalf. */
@@ -125,7 +148,8 @@ public class AttendanceService {
         if (needsTimes && req.checkIn() == null) {
             throw ApiException.badRequest("Check-in time is required for " + req.status());
         }
-        if (req.checkIn() != null && req.checkOut() != null && !req.checkOut().isAfter(req.checkIn())) {
+        if (req.checkIn() != null && req.checkOut() != null && !req.checkOut().isAfter(req.checkIn())
+                && !checkOutMayBeBeforeCheckIn(emp)) {
             throw ApiException.badRequest("Check-out must be after check-in");
         }
         AttendanceRecord rec = attendance.findByEmployeeIdAndDate(emp.getId(), req.date())
@@ -138,7 +162,7 @@ public class AttendanceService {
         audit.log(AuditService.ATTENDANCE_EDITED, "Attendance", saved.getId(),
                 emp.getEmployeeCode() + " " + req.date() + " -> " + req.status()
                         + (needsTimes ? " " + req.checkIn() + "-" + (req.checkOut() == null ? "?" : req.checkOut()) : ""));
-        return AttendanceView.of(saved);
+        return view(saved);
     }
 
     public AttendanceRecord getRecord(Long recordId) {
@@ -167,10 +191,10 @@ public class AttendanceService {
         for (Employee e : employees.findByActiveTrueOrderByFullNameAsc()) {
             if (!AccessGuard.inScope(e, department)) continue;
             AttendanceRecord r = byEmp.remove(e.getId());
-            rows.add(r != null ? AttendanceView.of(r) : AttendanceView.notMarked(e, date));
+            rows.add(r != null ? view(r) : AttendanceView.notMarked(e, date));
         }
         // records of employees that were deactivated later still show up
-        byEmp.values().forEach(r -> rows.add(AttendanceView.of(r)));
+        byEmp.values().forEach(r -> rows.add(view(r)));
         rows.sort(Comparator.comparing(AttendanceView::employeeName));
         return rows;
     }
@@ -213,12 +237,12 @@ public class AttendanceService {
                 .orElseGet(() -> new AttendanceRecord(emp, date, AttendanceStatus.PRESENT));
         rec.setCheckIn(checkIn);
         rec.setCheckOut(checkOut);
-        rec.setStatus(statusForCheckIn(checkIn));
+        rec.setStatus(statusForCheckIn(emp, checkIn));
         if (checkOut != null && rec.getHoursWorked() < props.halfDayHours()) {
             rec.setStatus(AttendanceStatus.HALF_DAY);
         }
         rec.setNote(note);
-        return AttendanceView.of(attendance.save(rec));
+        return view(attendance.save(rec));
     }
 
     public java.util.Optional<AttendanceRecord> findRecord(Long employeeId, LocalDate date) {
@@ -229,6 +253,6 @@ public class AttendanceService {
     public List<AttendanceView> history(Long employeeId, LocalDate from, LocalDate to) {
         employeeService.get(employeeId);
         return attendance.findByEmployeeIdAndDateBetweenOrderByDateDesc(employeeId, from, to)
-                .stream().map(AttendanceView::of).toList();
+                .stream().map(this::view).toList();
     }
 }

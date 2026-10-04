@@ -36,10 +36,12 @@ public class LeaveService {
     private final AuditService audit;
     private final AccessGuard guard;
     private final Clock clock;
+    private final WorkCalendar calendar;
 
     public LeaveService(LeaveRequestRepository repo, EmployeeService employees, AttendanceService attendance,
                         AttendanceProperties props, LeaveProperties leaveProps, AuditService audit,
-                        AccessGuard guard, Clock clock) {
+                        AccessGuard guard, Clock clock, WorkCalendar calendar) {
+        this.calendar = calendar;
         this.repo = repo;
         this.employees = employees;
         this.attendance = attendance;
@@ -51,7 +53,7 @@ public class LeaveService {
     }
 
     public List<LocalDate> workingDays(LocalDate from, LocalDate to) {
-        return from.datesUntil(to.plusDays(1)).filter(props::isWorkingDay).toList();
+        return calendar.workingDays(from, to); // excludes weekends and holidays
     }
 
     // ---------- employee side ----------

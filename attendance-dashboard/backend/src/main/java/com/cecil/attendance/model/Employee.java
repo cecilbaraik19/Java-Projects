@@ -32,6 +32,11 @@ public class Employee {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Null = the default office hours from application.properties. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "shift_id")
+    private Shift shift;
+
     public Employee() {
     }
 
@@ -61,4 +66,6 @@ public class Employee {
     public void setJoinDate(LocalDate joinDate) { this.joinDate = joinDate; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public Shift getShift() { return shift; }
+    public void setShift(Shift shift) { this.shift = shift; }
 }
