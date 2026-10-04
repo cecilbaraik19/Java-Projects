@@ -170,6 +170,19 @@ credential-chain/
         └── components/   CredentialCertificate (with QR), VerificationReport, Hash, StatusBadge, Toast
 ```
 
+## Start everything with one command (Windows)
+
+From the `credential-chain` folder in PowerShell:
+
+```powershell
+.\start-dev.ps1            # backend (H2) + frontend, opens the browser
+.\start-dev.ps1 -Mysql     # same, but with the MySQL database
+```
+
+Or just **double-click `start-dev.bat`**. Two windows open (backend and frontend); close them to stop.
+If Windows blocks the script: `powershell -ExecutionPolicy Bypass -File .\start-dev.ps1`.
+The script finds Maven on your PATH or the copy bundled with IntelliJ, so a separate Maven install is not needed.
+
 ## Bulk issue from CSV / Excel
 
 Sign in as college staff → **Bulk Issue**. Download the template, fill it in Excel, then

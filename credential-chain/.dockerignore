@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/target
+data
+backend/data
+backend/src/main/resources/static
+.git
+.idea
+*.iml
+docs

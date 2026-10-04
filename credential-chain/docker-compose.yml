@@ -1,0 +1,40 @@
+# Start everything (MySQL + app) with ONE command:
+#     docker compose up --build
+# Then open http://localhost:8080
+# Stop:   docker compose down          (data is kept)
+# Reset:  docker compose down -v       (deletes all data)
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass123}
+      MYSQL_DATABASE: credchain
+      MYSQL_USER: credchain
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-credchain123}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpass123}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      MYSQL_HOST: db
+      MYSQL_USER: credchain
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-credchain123}
+      # Keeps users signed in across restarts. Change it for real use.
+      CREDCHAIN_JWT_SECRET: ${CREDCHAIN_JWT_SECRET:-change-me-to-a-long-random-secret-value}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
