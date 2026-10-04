@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldX, CheckCircle2, XCircle, Camera, Upload, Link2, Dow
 import { api } from '../api.js'
 import { Mono, Spinner } from '../components/ui.jsx'
 import { fmtDate, fmtValue } from '../util.js'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 
 function Result({ r, onReset }) {
   const download = () => {
@@ -143,7 +144,7 @@ export default function Verify({ embedded }) {
       {!embedded && (
         <header className="verify-head">
           <Link to="/" className="brand"><img src="/favicon.svg" alt="" width="28" height="28" /><b>IdentityWallet</b></Link>
-          <span className="pill muted">Verifier</span>
+          <div className="right"><span className="pill muted">Verifier</span><ThemeToggle /></div>
         </header>
       )}
       <div className="verify-box">

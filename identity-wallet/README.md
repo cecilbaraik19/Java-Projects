@@ -52,6 +52,7 @@ A self-sovereign-style **digital identity wallet**. Trusted organisations (gover
 | **Tamper-evident audit log** | `AuditService` | Every event stores the previous event's hash (like a blockchain). Admin can verify the whole chain |
 | **Upload safety** | `VaultService.sniff` | File type decided by magic bytes, not the file name; size-limited; filename sanitised; SHA-256 integrity check on download |
 | **IDOR protection** | `CredentialService.owned` etc. | Every read checks ownership and returns 404 for other people's IDs |
+| **Light / Dark / System theme** | `ThemeToggle.jsx`, `theme.js` | Toggle in the top bar, login and verifier pages; choice remembered per browser, "System" follows Windows |
 | **Security headers** | `WebConfig.securityHeaders` | `nosniff`, `X-Frame-Options: DENY`, `no-referrer`, `Cache-Control: no-store` on API |
 
 ---
@@ -61,14 +62,27 @@ A self-sovereign-style **digital identity wallet**. Trusted organisations (gover
 ### Prerequisites
 
 - JDK 17 or newer
-- Maven 3.9+ (or just open `backend` in IntelliJ, which has Maven built in)
 - Node.js 18+
+- Maven is **not** required: `backend\mvnw.cmd` downloads it automatically (IntelliJ's built-in Maven also works)
+
+### Quick start (Windows, one command)
+
+```powershell
+cd "D:\Web-Development\Java Projects\identity-wallet"
+.\start-dev.ps1
+```
+
+This opens two windows (backend on 8080, website on 5173), waits until both are ready and opens the browser.
+If PowerShell says scripts are disabled, double-click **`start-dev.cmd`** instead.
+Stop everything with `.\stop-dev.ps1` (or `stop-dev.cmd`, or just close the two windows).
+
+### Manual start
 
 ### 1. Backend (port 8080)
 
 ```bash
 cd backend
-mvn spring-boot:run
+.\mvnw.cmd spring-boot:run      # or: mvn spring-boot:run
 ```
 
 On first start it seeds three demo issuers, two holders and sample credentials:

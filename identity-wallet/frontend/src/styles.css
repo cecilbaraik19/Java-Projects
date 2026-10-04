@@ -7,13 +7,23 @@
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
+/* Theme: "system" follows the OS; data-theme="light" / "dark" on <html> forces one (see theme.js) */
+:root { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0c0f1c; --panel: #141829; --panel2: #1b2036; --line: #262c45; --text: #e8eaf6; --muted: #9399b5;
     --accent: #7b7bff; --accent2: #a17bff; --accent-soft: #23244a;
     --ok: #34d399; --ok-soft: #10302a; --warn: #fbbf24; --warn-soft: #34290e; --bad: #fb7185; --bad-soft: #3a1820;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.25);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+    --bg: #0c0f1c; --panel: #141829; --panel2: #1b2036; --line: #262c45; --text: #e8eaf6; --muted: #9399b5;
+    --accent: #7b7bff; --accent2: #a17bff; --accent-soft: #23244a;
+    --ok: #34d399; --ok-soft: #10302a; --warn: #fbbf24; --warn-soft: #34290e; --bad: #fb7185; --bad-soft: #3a1820;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.25);
+    color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }
@@ -263,3 +273,15 @@ a.stat:hover { transform: translateY(-2px); border-color: var(--accent); }
   .row2 { flex-direction: column; align-items: stretch; } .verify-options { grid-template-columns: 1fr; }
   .share-meta { align-items: flex-start; }
 }
+
+/* theme toggle */
+.theme-toggle { display: inline-flex; background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: 3px; gap: 2px; }
+.theme-toggle button { border: 0; background: none; color: var(--muted); width: 30px; height: 28px; border-radius: 99px; display: grid; place-items: center; cursor: pointer; transition: .15s; }
+.theme-toggle button:hover { color: var(--text); }
+.theme-toggle button.on { background: var(--panel); color: var(--accent); box-shadow: var(--shadow); }
+.theme-toggle.on-dark { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+.theme-toggle.on-dark button { color: #c9cbf2; }
+.theme-toggle.on-dark button.on { background: rgba(255,255,255,.18); color: #fff; box-shadow: none; }
+.auth-toggle { position: fixed; top: 16px; right: 16px; z-index: 5; }
+.verify-head .right { display: flex; align-items: center; gap: .6rem; }
+body { transition: background-color .2s ease; }

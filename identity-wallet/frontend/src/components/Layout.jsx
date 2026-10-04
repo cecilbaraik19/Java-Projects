@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Wallet, Share2, Lock, ShieldCheck, Stamp, Building2, ScanLine, LogOut, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../auth.jsx'
+import ThemeToggle from './ThemeToggle.jsx'
 
 const NAV = {
   USER: [
@@ -49,6 +50,7 @@ export default function Layout() {
           <button className="icon-btn mobile-only" onClick={() => setOpen(!open)} aria-label="Menu"><Menu size={20} /></button>
           <span className="role-chip">{user.role === 'USER' ? 'Wallet holder' : user.role === 'ISSUER' ? 'Issuer staff' : 'Administrator'}</span>
           {user.mfaEnabled ? <span className="pill ok">2FA on</span> : <span className="pill warn">2FA off</span>}
+          <ThemeToggle />
         </header>
         <main className="content"><Outlet /></main>
       </div>

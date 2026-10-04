@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ShieldCheck, Fingerprint, EyeOff, KeyRound, ScanLine } from 'lucide-react'
 import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 
 const DEMO = [
   ['Wallet holder', 'aarav@wallet.demo', 'User@1234'],
@@ -36,6 +37,7 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-toggle" />
       <section className="auth-hero">
         <div className="brand big"><img src="/favicon.svg" alt="" width="40" height="40" /><b>IdentityWallet</b></div>
         <h1>Your identity, in your hands.</h1>
