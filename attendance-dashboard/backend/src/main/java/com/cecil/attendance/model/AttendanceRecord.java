@@ -33,6 +33,13 @@ public class AttendanceRecord {
     @Column(length = 255)
     private String note;
 
+    /** How a self check-in/out was verified, e.g. "Self · QR · GPS 42 m · IP 192.168.1.20". */
+    @Column(length = 160)
+    private String checkInVerification;
+
+    @Column(length = 160)
+    private String checkOutVerification;
+
     public AttendanceRecord() {
     }
 
@@ -63,4 +70,8 @@ public class AttendanceRecord {
     public void setStatus(AttendanceStatus status) { this.status = status; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public String getCheckInVerification() { return checkInVerification; }
+    public void setCheckInVerification(String v) { this.checkInVerification = v; }
+    public String getCheckOutVerification() { return checkOutVerification; }
+    public void setCheckOutVerification(String v) { this.checkOutVerification = v; }
 }

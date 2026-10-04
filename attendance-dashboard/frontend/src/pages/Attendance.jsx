@@ -137,7 +137,7 @@ export default function Attendance() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Employee</th><th>Code</th><th>Check in</th><th>Check out</th><th className="num">Hours</th><th>Status</th><th>Note</th><th className="num">Actions</th></tr>
+              <tr><th>Employee</th><th>Code</th><th>Check in</th><th>Check out</th><th className="num">Hours</th><th>Status</th><th>Note / verified</th><th className="num">Actions</th></tr>
             </thead>
             <tbody>
               {filtered.map((r) => (
@@ -148,7 +148,10 @@ export default function Attendance() {
                   <td className="tabular">{fmtTime(r.checkOut)}</td>
                   <td className="num">{r.hoursWorked ? r.hoursWorked.toFixed(1) : '—'}</td>
                   <td><StatusBadge status={r.status} /></td>
-                  <td className="muted" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.note ?? ''}</td>
+                  <td className="muted" style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 12.5 }}
+                      title={[r.checkInVerification && `In: ${r.checkInVerification}`, r.checkOutVerification && `Out: ${r.checkOutVerification}`, r.note].filter(Boolean).join('\n')}>
+                    {r.note ?? r.checkInVerification ?? ''}
+                  </td>
                   <td className="num">
                     <div style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
                       {isToday && !r.checkIn && r.status !== 'ON_LEAVE' && (

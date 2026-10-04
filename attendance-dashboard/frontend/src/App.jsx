@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTheme } from './theme.jsx';
 import { useAuth } from './auth.jsx';
 import { api, ROLE_LABEL } from './api.js';
@@ -7,7 +7,7 @@ import { useToast } from './components/Toast.jsx';
 import Modal from './components/Modal.jsx';
 import {
   IconCalendar, IconCheck, IconClock, IconDashboard, IconEdit, IconKey, IconList, IconLogOut, IconMoon, IconReport,
-  IconShield, IconSun, IconUsers,
+  IconLock, IconShield, IconSun, IconUsers,
 } from './components/Icons.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Attendance from './pages/Attendance.jsx';
@@ -19,6 +19,15 @@ import MyAttendance from './pages/MyAttendance.jsx';
 import MyRequests from './pages/MyRequests.jsx';
 import Approvals from './pages/Approvals.jsx';
 import Login from './pages/Login.jsx';
+import Kiosk from './pages/Kiosk.jsx';
+import QrCheckIn from './pages/QrCheckIn.jsx';
+import CheckInSecurity from './pages/CheckInSecurity.jsx';
+
+// Full-screen pages without the sidebar
+const BARE = [
+  { path: '/kiosk', roles: ['ADMIN', 'MANAGER'], element: <Kiosk /> },
+  { path: '/checkin', roles: ['EMPLOYEE', 'MANAGER'], element: <QrCheckIn /> },
+];
 
 // Which pages each role can open
 function buildNav(refreshCounts) {
@@ -31,6 +40,7 @@ function buildNav(refreshCounts) {
     { to: '/my', label: 'My Attendance', icon: IconCalendar, roles: ['EMPLOYEE', 'MANAGER'], element: <MyAttendance /> },
     { to: '/requests', label: 'My Requests', icon: IconEdit, roles: ['EMPLOYEE', 'MANAGER'], element: <MyRequests /> },
     { to: '/users', label: 'Users', icon: IconShield, roles: ['ADMIN'], element: <Users /> },
+    { to: '/security', label: 'Check-in security', icon: IconLock, roles: ['ADMIN'], element: <CheckInSecurity /> },
     { to: '/audit', label: 'Audit log', icon: IconList, roles: ['ADMIN'], element: <AuditLog /> },
   ];
 }
@@ -130,9 +140,13 @@ export default function App() {
   const { user, checking } = useAuth();
   const reviewer = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const [pendingCount, refreshCounts] = usePendingCount(reviewer);
+  const location = useLocation();
 
   if (checking) return <div className="empty" style={{ paddingTop: '30vh' }}>Loading…</div>;
   if (!user) return <Login />;
+
+  const bare = BARE.find((b) => b.path === location.pathname && b.roles.includes(user.role));
+  if (bare) return bare.element;
 
   const allowed = buildNav(refreshCounts).filter((n) => n.roles.includes(user.role));
   const home = allowed[0]?.to ?? '/';

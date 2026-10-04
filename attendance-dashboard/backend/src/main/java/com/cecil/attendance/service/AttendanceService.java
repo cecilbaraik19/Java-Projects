@@ -52,6 +52,12 @@ public class AttendanceService {
 
     @Transactional
     public AttendanceView checkIn(Long employeeId) {
+        return checkIn(employeeId, null);
+    }
+
+    /** @param verification how a self check-in was verified (null when marked by admin/manager) */
+    @Transactional
+    public AttendanceView checkIn(Long employeeId, String verification) {
         Employee emp = employeeService.get(employeeId);
         if (!emp.isActive()) throw ApiException.badRequest(emp.getFullName() + " is inactive");
 
@@ -68,6 +74,7 @@ public class AttendanceService {
         }
         rec.setCheckIn(now);
         rec.setStatus(statusForCheckIn(now));
+        rec.setCheckInVerification(verification != null ? verification : markedBy());
         AttendanceRecord saved = attendance.save(rec);
         audit.log(AuditService.CHECK_IN, "Attendance", saved.getId(),
                 emp.getEmployeeCode() + " at " + now + " (" + saved.getStatus() + ")");
@@ -76,6 +83,11 @@ public class AttendanceService {
 
     @Transactional
     public AttendanceView checkOut(Long employeeId) {
+        return checkOut(employeeId, null);
+    }
+
+    @Transactional
+    public AttendanceView checkOut(Long employeeId, String verification) {
         Employee emp = employeeService.get(employeeId);
         LocalDate today = LocalDate.now(clock);
         LocalTime now = LocalTime.now(clock).truncatedTo(ChronoUnit.MINUTES);
@@ -90,10 +102,16 @@ public class AttendanceService {
         if (rec.getHoursWorked() < props.halfDayHours()) {
             rec.setStatus(AttendanceStatus.HALF_DAY);
         }
+        rec.setCheckOutVerification(verification != null ? verification : markedBy());
         AttendanceRecord saved = attendance.save(rec);
         audit.log(AuditService.CHECK_OUT, "Attendance", saved.getId(),
                 emp.getEmployeeCode() + " at " + now + " (" + saved.getHoursWorked() + " h)");
         return AttendanceView.of(saved);
+    }
+
+    /** "Marked by manager" style label for attendance entered on someone's behalf. */
+    private static String markedBy() {
+        return AccessGuard.currentUser().map(u -> "Marked by " + u.username()).orElse(null);
     }
 
     /** Admin create-or-update for any date (corrections, leave, marking absent). */

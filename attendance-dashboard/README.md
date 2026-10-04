@@ -16,6 +16,24 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
 - **Leave requests** – apply for Casual (12/yr), Sick (10/yr), Earned (15/yr) or Unpaid leave; balance shown live; manager approves/rejects (rejection needs a reason); approved leave marks the days as *On leave*; upcoming approved leave can be cancelled.
 - **Correction requests** – "I forgot to check out": employee sends the real times, manager approves and the record is updated.
 - **Approvals** – queue with a badge count for managers (own department) and admins. Nobody can approve their own request.
+- **Check-in security** (admin → *Check-in security*) – stop "buddy punching" on self check-in, combine any of:
+  - **Rotating QR code** – open the **Kiosk screen** on an office monitor/tablet; it shows a QR + 6-digit code that changes every 30 s (HMAC-based, like an authenticator app). Employees scan it with their phone or type the code. 5 wrong codes → blocked for 10 min.
+  - **Geofence** – the phone's GPS must be within *N* metres of the office ("Use my current location" to set it).
+  - **Office network** – only allowed IPs / CIDR ranges. `X-Forwarded-For` is only trusted from local proxies (`attendance.security.trusted-proxies`), so it can't be spoofed from outside.
+  - Every blocked attempt is written to the audit log as *Check-in rejected*; each record shows how it was verified (e.g. `Self · IP 192.168.1.20 · GPS 42 m · QR`).
+
+### Testing QR / GPS check-in on a phone
+
+Phones only allow the camera and GPS on **https** pages, so start the frontend in phone mode:
+
+```powershell
+cd frontend
+npm install          # first time (adds the QR + https plugins)
+npm run dev:phone
+```
+
+It prints a `Network: https://192.168.x.x:5173/` address. Open that on your phone (same Wi-Fi), accept the certificate warning (it's a local self-signed certificate), log in as `employee` and scan the kiosk QR shown on your PC at `/kiosk`.
+If Windows Firewall asks, allow Node.js on private networks.
 
 ### Accounts & roles
 
@@ -125,6 +143,10 @@ All endpoints except login need the header `Authorization: Bearer <token>`.
 | GET | `/api/approvals/leave?status=PENDING\|ALL` | Leave approval queue |
 | POST | `/api/approvals/leave/{id}` `{approve, comment}` | Approve / reject leave |
 | GET / POST | `/api/approvals/corrections[/{id}]` | Correction queue / review |
+| GET | `/api/me/checkin-policy` | Which proofs self check-in needs |
+| GET / PUT | `/api/settings/checkin` | Check-in security rules (admin) |
+| GET | `/api/settings/client-ip` | IP the server sees for you (admin) |
+| GET | `/api/kiosk/code` | Current rotating QR code (admin/manager) |
 | GET | `/api/employees?activeOnly=false` | List employees |
 | GET | `/api/employees/departments` | Department names |
 | POST / PUT / DELETE | `/api/employees[/{id}]` | Create / update / delete employee |

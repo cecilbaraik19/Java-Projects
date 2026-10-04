@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, fmtDate, fmtTime, toIso, todayIso } from '../api.js';
+import { api, buildProof, fmtDate, fmtTime, toIso, todayIso } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useToast } from '../components/Toast.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -18,15 +18,21 @@ function CheckInCard({ today, onChange }) {
   const toast = useToast();
   const now = useClock();
   const [busy, setBusy] = useState(false);
+  const [policy, setPolicy] = useState(null);
+  const [code, setCode] = useState('');
+  useEffect(() => { api.checkInPolicy().then(setPolicy).catch(() => {}); }, []);
   const status = today?.status ?? 'NOT_MARKED';
   const canIn = !today?.checkIn && status !== 'ON_LEAVE';
   const canOut = today?.checkIn && !today?.checkOut;
 
+  const needCode = policy?.requireQr && (canIn || canOut);
   const act = async (fn, verb) => {
+    if (needCode && code.length !== 6) { toast('Enter the 6-digit code shown on the office screen', 'error'); return; }
     setBusy(true);
     try {
-      const r = await fn();
+      const r = await fn(await buildProof(policy, code));
       toast(`${verb} at ${fmtTime(verb === 'Checked in' ? r.checkIn : r.checkOut)}`);
+      setCode('');
       onChange();
     } catch (e) { toast(e.message, 'error'); }
     setBusy(false);
@@ -42,8 +48,19 @@ function CheckInCard({ today, onChange }) {
           {today?.checkIn && <span className="muted">In {fmtTime(today.checkIn)}</span>}
           {today?.checkOut && <span className="muted">· Out {fmtTime(today.checkOut)} · {today.hoursWorked.toFixed(1)} h</span>}
         </div>
+        {policy && (policy.requireQr || policy.requireLocation || policy.requireNetwork) && (canIn || canOut) && (
+          <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+            Requires {[policy.requireQr && 'the code from the office screen (or scan its QR)', policy.requireLocation && 'your location',
+              policy.requireNetwork && 'the office network'].filter(Boolean).join(', ')}
+          </div>
+        )}
       </div>
       <div className="checkin-actions">
+        {needCode && (
+          <input className="input code-input tabular" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                 placeholder="6-digit code" aria-label="6-digit code from the office screen"
+                 value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+        )}
         {canIn && <button className="btn btn-primary btn-lg" disabled={busy} onClick={() => act(api.myCheckIn, 'Checked in')}><IconLogIn />Check in</button>}
         {canOut && <button className="btn btn-lg" disabled={busy} onClick={() => act(api.myCheckOut, 'Checked out')}><IconLogOut />Check out</button>}
         {!canIn && !canOut && <span className="muted">{status === 'ON_LEAVE' ? 'You are on leave today' : 'Done for today'}</span>}

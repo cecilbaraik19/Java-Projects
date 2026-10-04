@@ -61,8 +61,15 @@ export const api = {
   changePassword: (currentPassword, newPassword) =>
     request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
   myAttendance: (from, to) => request(`/me/attendance?${qs({ from, to })}`),
-  myCheckIn: () => request('/me/check-in', { method: 'POST' }),
-  myCheckOut: () => request('/me/check-out', { method: 'POST' }),
+  myCheckIn: (proof = {}) => request('/me/check-in', { method: 'POST', body: proof }),
+  myCheckOut: (proof = {}) => request('/me/check-out', { method: 'POST', body: proof }),
+  checkInPolicy: () => request('/me/checkin-policy'),
+
+  // check-in security (admin) + kiosk
+  checkInSettings: () => request('/settings/checkin'),
+  saveCheckInSettings: (data) => request('/settings/checkin', { method: 'PUT', body: data }),
+  clientIp: () => request('/settings/client-ip'),
+  kioskCode: () => request('/kiosk/code'),
   myLeaveBalance: (year) => request(`/me/leave-balance?${qs({ year })}`),
   myLeave: () => request('/me/leave-requests'),
   applyLeave: (data) => request('/me/leave-requests', { method: 'POST', body: data }),
@@ -144,6 +151,35 @@ export function countWeekdays(fromIso, toIso) {
   return n;
 }
 function toIsoDate(d) { return toIso(d); }
+
+/** Current GPS position as { latitude, longitude, accuracy } (asks the browser for permission). */
+export function getPosition() {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) { reject(new Error('This browser cannot share your location')); return; }
+    if (!window.isSecureContext) {
+      reject(new Error('Location only works on https:// or localhost. Use "npm run dev:phone" for phones.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy }),
+      (err) => reject(new Error(err.code === 1
+        ? 'Location permission was denied. Allow location for this site and try again.'
+        : 'Could not get your location. Turn on GPS / location services and try again.')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  });
+}
+
+/**
+ * Builds the proof for a self check-in/out from the active policy:
+ * asks for GPS when required and attaches the QR code if given.
+ */
+export async function buildProof(policy, qrCode) {
+  const proof = {};
+  if (policy?.requireLocation) Object.assign(proof, await getPosition());
+  if (qrCode) proof.qrCode = qrCode;
+  return proof;
+}
 
 /** "09:15–18:10", or "09:15–?" when there is no check-out. */
 export const fmtSpan = (a, b) => `${fmtTime(a)}–${b ? fmtTime(b) : '?'}`;

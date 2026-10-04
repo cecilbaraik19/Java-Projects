@@ -1,6 +1,8 @@
 package com.cecil.attendance.controller;
 
 import com.cecil.attendance.dto.Dtos.AttendanceView;
+import com.cecil.attendance.dto.Dtos.CheckInPolicy;
+import com.cecil.attendance.dto.Dtos.SelfCheckRequest;
 import com.cecil.attendance.dto.Dtos.CorrectionCreateRequest;
 import com.cecil.attendance.dto.Dtos.CorrectionView;
 import com.cecil.attendance.dto.Dtos.LeaveBalance;
@@ -8,6 +10,7 @@ import com.cecil.attendance.dto.Dtos.LeaveCreateRequest;
 import com.cecil.attendance.dto.Dtos.LeaveView;
 import com.cecil.attendance.security.AccessGuard;
 import com.cecil.attendance.service.AttendanceService;
+import com.cecil.attendance.service.CheckInPolicyService;
 import com.cecil.attendance.service.CorrectionService;
 import com.cecil.attendance.service.LeaveService;
 import jakarta.validation.Valid;
@@ -30,14 +33,16 @@ public class MeController {
     private final AttendanceService attendance;
     private final LeaveService leave;
     private final CorrectionService corrections;
+    private final CheckInPolicyService policy;
     private final AccessGuard guard;
     private final Clock clock;
 
     public MeController(AttendanceService attendance, LeaveService leave, CorrectionService corrections,
-                        AccessGuard guard, Clock clock) {
+                        CheckInPolicyService policy, AccessGuard guard, Clock clock) {
         this.attendance = attendance;
         this.leave = leave;
         this.corrections = corrections;
+        this.policy = policy;
         this.guard = guard;
         this.clock = clock;
     }
@@ -51,14 +56,24 @@ public class MeController {
         return attendance.history(guard.requireEmployeeId(), from, to);
     }
 
+    /** Which proofs (QR code, location) the client must collect before checking in. */
+    @GetMapping("/checkin-policy")
+    public CheckInPolicy checkInPolicy() {
+        return policy.policy();
+    }
+
     @PostMapping("/check-in")
-    public AttendanceView checkIn() {
-        return attendance.checkIn(guard.requireEmployeeId());
+    public AttendanceView checkIn(@Valid @RequestBody(required = false) SelfCheckRequest req) {
+        Long empId = guard.requireEmployeeId();
+        String proof = policy.verify(empId, req, false);
+        return attendance.checkIn(empId, proof);
     }
 
     @PostMapping("/check-out")
-    public AttendanceView checkOut() {
-        return attendance.checkOut(guard.requireEmployeeId());
+    public AttendanceView checkOut(@Valid @RequestBody(required = false) SelfCheckRequest req) {
+        Long empId = guard.requireEmployeeId();
+        String proof = policy.verify(empId, req, true);
+        return attendance.checkOut(empId, proof);
     }
 
     // ---------- leave ----------

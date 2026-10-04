@@ -2,13 +2,18 @@ package com.cecil.attendance.dto;
 
 import com.cecil.attendance.model.AttendanceRecord;
 import com.cecil.attendance.model.AttendanceStatus;
+import com.cecil.attendance.model.CheckInSettings;
 import com.cecil.attendance.model.CorrectionRequest;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.model.LeaveRequest;
 import com.cecil.attendance.model.LeaveType;
 import com.cecil.attendance.model.Role;
 import com.cecil.attendance.model.UserAccount;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -65,17 +70,20 @@ public final class Dtos {
             LocalTime checkOut,
             String status,
             double hoursWorked,
-            String note
+            String note,
+            String checkInVerification,
+            String checkOutVerification
     ) {
         public static AttendanceView of(AttendanceRecord r) {
             Employee e = r.getEmployee();
             return new AttendanceView(r.getId(), e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
-                    r.getDate(), r.getCheckIn(), r.getCheckOut(), r.getStatus().name(), r.getHoursWorked(), r.getNote());
+                    r.getDate(), r.getCheckIn(), r.getCheckOut(), r.getStatus().name(), r.getHoursWorked(), r.getNote(),
+                    r.getCheckInVerification(), r.getCheckOutVerification());
         }
 
         public static AttendanceView notMarked(Employee e, LocalDate date) {
             return new AttendanceView(null, e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
-                    date, null, null, "NOT_MARKED", 0, null);
+                    date, null, null, "NOT_MARKED", 0, null, null, null);
         }
     }
 
@@ -180,6 +188,45 @@ public final class Dtos {
                     e != null ? e.getId() : null, e != null ? e.getFullName() : null,
                     e != null ? e.getDepartment() : null, u.getLastLoginAt(), u.getCreatedAt());
         }
+    }
+
+    // ---------- Check-in security ----------
+
+    /** Optional proof sent with a self check-in/out. */
+    public record SelfCheckRequest(@Size(max = 12) String qrCode, Double latitude, Double longitude, Double accuracy) {
+    }
+
+    /** What the client must collect before self check-in. */
+    public record CheckInPolicy(boolean requireQr, boolean requireLocation, boolean requireNetwork) {
+    }
+
+    public record CheckInSettingsView(boolean requireQr, int qrRotationSeconds,
+                                      boolean requireLocation, Double officeLatitude, Double officeLongitude,
+                                      int radiusMeters, boolean requireNetwork, String allowedNetworks,
+                                      Instant updatedAt, String updatedBy) {
+        public static CheckInSettingsView of(CheckInSettings s) {
+            return new CheckInSettingsView(s.isRequireQr(), s.getQrRotationSeconds(), s.isRequireLocation(),
+                    s.getOfficeLatitude(), s.getOfficeLongitude(), s.getRadiusMeters(), s.isRequireNetwork(),
+                    s.getAllowedNetworks(), s.getUpdatedAt(), s.getUpdatedBy());
+        }
+    }
+
+    public record CheckInSettingsUpdate(
+            @NotNull Boolean requireQr,
+            @NotNull @Min(15) @Max(300) Integer qrRotationSeconds,
+            @NotNull Boolean requireLocation,
+            @DecimalMin("-90") @DecimalMax("90") Double officeLatitude,
+            @DecimalMin("-180") @DecimalMax("180") Double officeLongitude,
+            @NotNull @Min(20) @Max(5000) Integer radiusMeters,
+            @NotNull Boolean requireNetwork,
+            @Size(max = 1000) String allowedNetworks
+    ) {
+    }
+
+    public record KioskCode(String code, long secondsLeft, int rotationSeconds) {
+    }
+
+    public record ClientIpView(String ip) {
     }
 
     public record PageView<T>(List<T> content, int page, int size, long totalElements, int totalPages) {

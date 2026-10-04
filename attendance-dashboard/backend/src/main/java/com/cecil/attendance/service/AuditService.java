@@ -3,13 +3,11 @@ package com.cecil.attendance.service;
 import com.cecil.attendance.model.AuditLog;
 import com.cecil.attendance.repository.AuditLogRepository;
 import com.cecil.attendance.security.AccessGuard;
+import com.cecil.attendance.security.ClientIpResolver;
 import com.cecil.attendance.security.CurrentUser;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
 
@@ -40,11 +38,15 @@ public class AuditService {
     public static final String CORRECTION_APPROVED = "CORRECTION_APPROVED";
     public static final String CORRECTION_REJECTED = "CORRECTION_REJECTED";
     public static final String CORRECTION_CANCELLED = "CORRECTION_CANCELLED";
+    public static final String CHECK_IN_REJECTED = "CHECK_IN_REJECTED";
+    public static final String SETTINGS_UPDATED = "SETTINGS_UPDATED";
 
     private final AuditLogRepository repo;
+    private final ClientIpResolver ipResolver;
 
-    public AuditService(AuditLogRepository repo) {
+    public AuditService(AuditLogRepository repo, ClientIpResolver ipResolver) {
         this.repo = repo;
+        this.ipResolver = ipResolver;
     }
 
     /** Logs an action by the currently authenticated user. */
@@ -57,7 +59,7 @@ public class AuditService {
     public void logAs(String username, String action, String entityType, Object entityId, String details) {
         repo.save(new AuditLog(Instant.now(), truncate(username, 40), action, entityType,
                 entityId == null ? null : truncate(String.valueOf(entityId), 40),
-                truncate(details, 500), clientIp()));
+                truncate(details, 500), truncate(ipResolver.current(), 64)));
     }
 
     public Page<AuditLog> search(String username, String action, int page, int size) {
@@ -65,14 +67,6 @@ public class AuditService {
         return repo.search(username == null ? "" : username.trim(),
                 action == null ? "" : action.trim(),
                 PageRequest.of(Math.max(page, 0), safeSize));
-    }
-
-    private static String clientIp() {
-        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
-            HttpServletRequest req = attrs.getRequest();
-            return truncate(req.getRemoteAddr(), 64);
-        }
-        return null;
     }
 
     private static String truncate(String s, int max) {
