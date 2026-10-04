@@ -37,11 +37,13 @@ public class LeaveService {
     private final AccessGuard guard;
     private final Clock clock;
     private final WorkCalendar calendar;
+    private final AlertService alerts;
 
     public LeaveService(LeaveRequestRepository repo, EmployeeService employees, AttendanceService attendance,
                         AttendanceProperties props, LeaveProperties leaveProps, AuditService audit,
-                        AccessGuard guard, Clock clock, WorkCalendar calendar) {
+                        AccessGuard guard, Clock clock, WorkCalendar calendar, AlertService alerts) {
         this.calendar = calendar;
+        this.alerts = alerts;
         this.repo = repo;
         this.employees = employees;
         this.attendance = attendance;
@@ -115,6 +117,7 @@ public class LeaveService {
                 req.reason().trim()));
         audit.log(AuditService.LEAVE_REQUESTED, "Leave", saved.getId(),
                 emp.getEmployeeCode() + " " + req.type() + " " + req.fromDate() + " to " + req.toDate() + " (" + days + " d)");
+        alerts.leaveRequested(saved);
         return LeaveView.of(saved);
     }
 
@@ -180,7 +183,9 @@ public class LeaveService {
         audit.log(approve ? AuditService.LEAVE_APPROVED : AuditService.LEAVE_REJECTED, "Leave", l.getId(),
                 l.getEmployee().getEmployeeCode() + " " + l.getType() + " " + l.getFromDate() + " to " + l.getToDate()
                         + (note != null ? " - " + note : ""));
-        return LeaveView.of(repo.save(l));
+        LeaveRequest saved = repo.save(l);
+        alerts.leaveDecided(saved);
+        return LeaveView.of(saved);
     }
 
     public long pendingCount() {

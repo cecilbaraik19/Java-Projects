@@ -127,6 +127,19 @@ export const api = {
   deptStats: (date) => request(`/reports/departments${date ? `?date=${date}` : ''}`),
   summary: (from, to) => request(`/reports/summary?${qs({ from, to })}`),
   downloadSummaryCsv: (from, to) => download(`/reports/summary.csv?${qs({ from, to })}`, `attendance_${from}_to_${to}.csv`),
+  downloadSummaryXlsx: (from, to) => download(`/reports/summary.xlsx?${qs({ from, to })}`, `attendance_${from}_to_${to}.xlsx`),
+  downloadSummaryPdf: (from, to) => download(`/reports/summary.pdf?${qs({ from, to })}`, `attendance_${from}_to_${to}.pdf`),
+  patterns: (from, to) => request(`/reports/patterns?${qs({ from, to })}`),
+
+  // calendars
+  myCalendar: (month) => request(`/me/calendar?month=${month}`),
+  employeeCalendar: (id, month) => request(`/employees/${id}/calendar?month=${month}`),
+
+  // notifications (admin)
+  notifications: (kind) => request(`/notifications?${qs({ kind })}`),
+  notificationSettings: () => request('/notifications/settings'),
+  runMissingCheckIn: () => request('/notifications/run/missing-checkin', { method: 'POST' }),
+  runWeeklySummary: () => request('/notifications/run/weekly-summary', { method: 'POST' }),
 };
 
 // ---------- small shared helpers ----------

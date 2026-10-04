@@ -8,6 +8,7 @@ import com.cecil.attendance.dto.Dtos.CorrectionView;
 import com.cecil.attendance.dto.Dtos.LeaveBalance;
 import com.cecil.attendance.dto.Dtos.LeaveCreateRequest;
 import com.cecil.attendance.dto.Dtos.LeaveView;
+import com.cecil.attendance.dto.Dtos.MonthCalendar;
 import com.cecil.attendance.security.AccessGuard;
 import com.cecil.attendance.service.AttendanceService;
 import com.cecil.attendance.service.CheckInPolicyService;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 /**
@@ -54,6 +56,11 @@ public class MeController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return attendance.history(guard.requireEmployeeId(), from, to);
+    }
+
+    @GetMapping("/calendar")
+    public MonthCalendar myCalendar(@RequestParam String month) {
+        return attendance.monthCalendar(guard.requireEmployeeId(), YearMonth.parse(month));
     }
 
     /** Which proofs (QR code, location) the client must collect before checking in. */

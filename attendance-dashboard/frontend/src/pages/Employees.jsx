@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../auth.jsx';
 import Modal from '../components/Modal.jsx';
 import Person from '../components/Person.jsx';
-import StatusBadge from '../components/StatusBadge.jsx';
+import CalendarGrid from '../components/CalendarGrid.jsx';
 import { IconCalendar, IconEdit, IconPlus, IconTrash } from '../components/Icons.jsx';
 
 const EMPTY = { employeeCode: '', fullName: '', email: '', department: '', designation: '', joinDate: '', active: true };
@@ -70,41 +70,13 @@ function EmployeeForm({ initial, departments, shifts, onClose, onSaved }) {
 }
 
 function HistoryModal({ employee, onClose }) {
-  const [rows, setRows] = useState(null);
-  useEffect(() => {
-    const to = new Date();
-    const from = new Date(); from.setDate(from.getDate() - 30);
-    api.employeeHistory(employee.id, toIso(from), toIso(to)).then(setRows).catch(() => setRows([]));
-  }, [employee.id]);
-
-  const attended = rows?.filter((r) => ['PRESENT', 'LATE', 'HALF_DAY'].includes(r.status)).length ?? 0;
-  const late = rows?.filter((r) => r.status === 'LATE').length ?? 0;
-  const hours = rows?.reduce((s, r) => s + r.hoursWorked, 0) ?? 0;
-
+  const load = useCallback((month) => api.employeeCalendar(employee.id, month), [employee.id]);
   return (
-    <Modal title={`${employee.fullName} · last 30 days`} onClose={onClose}>
-      <div className="stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="card stat"><div className="stat-label">Days in</div><div className="stat-value">{attended}</div></div>
-        <div className="card stat"><div className="stat-label">Late</div><div className="stat-value">{late}</div></div>
-        <div className="card stat"><div className="stat-label">Hours</div><div className="stat-value">{Math.round(hours)}</div></div>
-      </div>
-      <div className="table-wrap" style={{ maxHeight: 320, border: '1px solid var(--border)', borderRadius: 10 }}>
-        <table>
-          <thead><tr><th>Date</th><th>In</th><th>Out</th><th>Status</th></tr></thead>
-          <tbody>
-            {rows?.map((r) => (
-              <tr key={r.id}>
-                <td>{fmtDate(r.date, { weekday: 'short', day: 'numeric', month: 'short' })}</td>
-                <td className="tabular">{fmtTime(r.checkIn)}</td>
-                <td className="tabular">{fmtTime(r.checkOut)}</td>
-                <td><StatusBadge status={r.status} /></td>
-              </tr>
-            ))}
-            {rows && !rows.length && <tr><td colSpan="4" className="empty">No records</td></tr>}
-            {!rows && <tr><td colSpan="4" className="empty">Loading…</td></tr>}
-          </tbody>
-        </table>
-      </div>
+    <Modal title={`${employee.fullName} · attendance`} onClose={onClose}>
+      <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+        {employee.employeeCode} · {employee.department} · Shift: {employee.shift ? fmtShift(employee.shift) : 'Default hours'}
+      </p>
+      <CalendarGrid load={load} />
     </Modal>
   );
 }

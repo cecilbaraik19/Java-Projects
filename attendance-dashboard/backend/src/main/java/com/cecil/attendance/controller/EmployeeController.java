@@ -2,6 +2,7 @@ package com.cecil.attendance.controller;
 
 import com.cecil.attendance.dto.Dtos.AttendanceView;
 import com.cecil.attendance.dto.Dtos.EmployeeRequest;
+import com.cecil.attendance.dto.Dtos.MonthCalendar;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.security.AccessGuard;
 import com.cecil.attendance.service.AttendanceService;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -57,6 +59,13 @@ public class EmployeeController {
                                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         guard.checkCanManage(service.get(id));
         return attendanceService.history(id, from, to);
+    }
+
+    @GetMapping("/{id}/calendar")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public MonthCalendar calendar(@PathVariable Long id, @RequestParam String month) {
+        guard.checkCanManage(service.get(id));
+        return attendanceService.monthCalendar(id, YearMonth.parse(month));
     }
 
     @PostMapping

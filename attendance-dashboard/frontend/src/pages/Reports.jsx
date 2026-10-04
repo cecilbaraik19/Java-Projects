@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, toIso, todayIso } from '../api.js';
 import { useToast } from '../components/Toast.jsx';
 import Person from '../components/Person.jsx';
-import { IconDownload } from '../components/Icons.jsx';
+import { IconAlert, IconDownload } from '../components/Icons.jsx';
 
 function presetRange(key) {
   const now = new Date();
@@ -36,8 +36,12 @@ export default function Reports() {
   const [sort, setSort] = useState({ key: 'attendanceRate', dir: 'desc' });
   const [dept, setDept] = useState('');
 
+  const [patterns, setPatterns] = useState([]);
   useEffect(() => {
-    if (from && to && from <= to) api.summary(from, to).then(setRows).catch((e) => toast(e.message, 'error'));
+    if (from && to && from <= to) {
+      api.summary(from, to).then(setRows).catch((e) => toast(e.message, 'error'));
+      api.patterns(from, to).then(setPatterns).catch(() => setPatterns([]));
+    }
   }, [from, to, toast]);
 
   const choose = (p) => { setPreset(p); setRange(presetRange(p)); };
@@ -63,9 +67,12 @@ export default function Reports() {
     <>
       <div className="page-head">
         <div><h1>Reports</h1><p>Per-employee attendance summary</p></div>
-        <button className="btn" onClick={() => api.downloadSummaryCsv(from, to).catch((e) => toast(e.message, 'error'))}>
-          <IconDownload />Export CSV
-        </button>
+        <div className="head-actions">
+          <span className="muted" style={{ fontSize: 13 }}><IconDownload width="14" height="14" style={{ verticalAlign: '-2px' }} /> Export</span>
+          {[['CSV', api.downloadSummaryCsv], ['Excel', api.downloadSummaryXlsx], ['PDF', api.downloadSummaryPdf]].map(([label, fn]) => (
+            <button key={label} className="btn btn-sm" onClick={() => fn(from, to).catch((e) => toast(e.message, 'error'))}>{label}</button>
+          ))}
+        </div>
       </div>
 
       <div className="stats">
@@ -77,6 +84,24 @@ export default function Reports() {
         <div className="card stat"><div className="stat-label">Overtime</div><div className="stat-value">{Math.round(totals.ot).toLocaleString('en-IN')} h</div>
           <div className="stat-sub">Beyond shift hours, plus weekend &amp; holiday work</div></div>
       </div>
+
+      {patterns.length > 0 && (
+        <section className="card attention" style={{ marginBottom: 18 }}>
+          <div className="card-head">
+            <div><h2><IconAlert width="16" height="16" style={{ verticalAlign: '-3px', marginRight: 6 }} />Needs attention</h2>
+              <p>Frequent late arrivals or absences in this period</p></div>
+          </div>
+          <ul className="attention-list">
+            {patterns.filter((p) => !dept || p.department === dept).slice(0, 8).map((p) => (
+              <li key={p.employeeId}>
+                <Person name={p.employeeName} sub={`${p.employeeCode} · ${p.department}`} />
+                <span>{p.message.replace(`${p.employeeName} was `, '')}</span>
+                <span className="tabular muted">{p.attendanceRate.toFixed(1)}%</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="card">
         <div className="toolbar">

@@ -3,6 +3,9 @@ package com.cecil.attendance.controller;
 import com.cecil.attendance.dto.Dtos.DashboardStats;
 import com.cecil.attendance.dto.Dtos.DepartmentStat;
 import com.cecil.attendance.dto.Dtos.EmployeeSummary;
+import com.cecil.attendance.dto.Dtos.LatePattern;
+import com.cecil.attendance.service.ExportService;
+import org.springframework.beans.factory.annotation.Value;
 import com.cecil.attendance.dto.Dtos.TrendPoint;
 import com.cecil.attendance.security.AccessGuard;
 import com.cecil.attendance.service.ReportService;
@@ -24,13 +27,57 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService service;
+    private final ExportService exports;
     private final AccessGuard guard;
     private final Clock clock;
+    private final int lateThreshold;
 
-    public ReportController(ReportService service, AccessGuard guard, Clock clock) {
+    public ReportController(ReportService service, ExportService exports, AccessGuard guard, Clock clock,
+                            @Value("${attendance.alerts.late-threshold:3}") int lateThreshold) {
         this.service = service;
+        this.exports = exports;
         this.guard = guard;
         this.clock = clock;
+        this.lateThreshold = lateThreshold;
+    }
+
+    private String scopeLabel() {
+        String d = guard.departmentScope();
+        return d == null ? "All departments" : d;
+    }
+
+    private static ResponseEntity<byte[]> file(byte[] body, String name, String type) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+                .contentType(MediaType.parseMediaType(type))
+                .body(body);
+    }
+
+    @GetMapping("/summary.xlsx")
+    public ResponseEntity<byte[]> summaryXlsx(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        byte[] xlsx = exports.xlsx(service.summary(from, to, guard.departmentScope()), from, to, scopeLabel());
+        return file(xlsx, "attendance_" + from + "_to_" + to + ".xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    @GetMapping("/summary.pdf")
+    public ResponseEntity<byte[]> summaryPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        byte[] pdf = exports.pdf(service.summary(from, to, guard.departmentScope()), from, to, scopeLabel());
+        return file(pdf, "attendance_" + from + "_to_" + to + ".pdf", "application/pdf");
+    }
+
+    /** People who were late or absent often in the period ("needs attention"). */
+    @GetMapping("/patterns")
+    public List<LatePattern> patterns(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Integer threshold) {
+        int t = threshold != null ? Math.max(1, Math.min(threshold, 31)) : lateThreshold;
+        return service.latePatterns(from, to, guard.departmentScope(), t);
     }
 
     @GetMapping("/stats")

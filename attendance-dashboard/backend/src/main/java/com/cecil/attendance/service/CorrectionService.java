@@ -29,10 +29,13 @@ public class CorrectionService {
     private final AccessGuard guard;
     private final Clock clock;
     private final WorkCalendar calendar;
+    private final AlertService alerts;
 
     public CorrectionService(CorrectionRequestRepository repo, EmployeeService employees, AttendanceService attendance,
-                             AuditService audit, AccessGuard guard, Clock clock, WorkCalendar calendar) {
+                             AuditService audit, AccessGuard guard, Clock clock, WorkCalendar calendar,
+                             AlertService alerts) {
         this.calendar = calendar;
+        this.alerts = alerts;
         this.repo = repo;
         this.employees = employees;
         this.attendance = attendance;
@@ -108,7 +111,9 @@ public class CorrectionService {
         audit.log(approve ? AuditService.CORRECTION_APPROVED : AuditService.CORRECTION_REJECTED, "Correction", c.getId(),
                 c.getEmployee().getEmployeeCode() + " " + c.getDate() + " " + c.getRequestedCheckIn() + "-"
                         + (c.getRequestedCheckOut() == null ? "?" : c.getRequestedCheckOut()) + (note != null ? " - " + note : ""));
-        return CorrectionView.of(repo.save(c));
+        CorrectionRequest saved = repo.save(c);
+        alerts.correctionDecided(saved);
+        return CorrectionView.of(saved);
     }
 
     public long pendingCount() {

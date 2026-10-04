@@ -4,6 +4,7 @@ import com.cecil.attendance.config.AttendanceProperties;
 import com.cecil.attendance.dto.Dtos.DashboardStats;
 import com.cecil.attendance.dto.Dtos.DepartmentStat;
 import com.cecil.attendance.dto.Dtos.EmployeeSummary;
+import com.cecil.attendance.dto.Dtos.LatePattern;
 import com.cecil.attendance.dto.Dtos.TrendPoint;
 import com.cecil.attendance.exception.ApiException;
 import com.cecil.attendance.model.AttendanceRecord;
@@ -135,6 +136,55 @@ public class ReportService {
                     Math.round(hours * 10) / 10.0, Math.round(overtime * 10) / 10.0, c.rate()));
         }
         return out;
+    }
+
+    /**
+     * Employees whose late arrivals or absences in the period reach {@code threshold}.
+     * "Late" is judged against each person's shift, so it also catches late half-days.
+     */
+    public List<LatePattern> latePatterns(LocalDate from, LocalDate to, String department, int threshold) {
+        Map<Long, EmployeeSummary> summaries = summary(from, to, department).stream()
+                .collect(Collectors.toMap(EmployeeSummary::employeeId, s -> s));
+        LocalDate end = to.isAfter(LocalDate.now(clock)) ? LocalDate.now(clock) : to;
+        Map<Long, List<AttendanceRecord>> byEmp = attendance.findByDateBetween(from, end).stream()
+                .filter(r -> r.getCheckIn() != null && AccessGuard.inScope(r.getEmployee(), department))
+                .collect(Collectors.groupingBy(r -> r.getEmployee().getId()));
+
+        List<LatePattern> out = new ArrayList<>();
+        for (Map.Entry<Long, List<AttendanceRecord>> en : byEmp.entrySet()) {
+            EmployeeSummary s = summaries.get(en.getKey());
+            if (s == null) continue;
+            List<AttendanceRecord> late = en.getValue().stream().filter(r -> {
+                WorkCalendar.ShiftRules rules = calendar.rulesFor(r.getEmployee());
+                return !rules.overnight() && r.getCheckIn().isAfter(rules.lateAfter());
+            }).toList();
+            if (late.size() < threshold && s.absent() < threshold) continue;
+
+            long avgLate = Math.round(late.stream().mapToLong(r -> java.time.Duration.between(
+                    calendar.rulesFor(r.getEmployee()).start(), r.getCheckIn()).toMinutes()).average().orElse(0));
+            Map<java.time.DayOfWeek, Long> byDay = late.stream()
+                    .collect(Collectors.groupingBy(r -> r.getDate().getDayOfWeek(), Collectors.counting()));
+            Map.Entry<java.time.DayOfWeek, Long> top = byDay.entrySet().stream()
+                    .max(Map.Entry.comparingByValue()).orElse(null);
+            String day = top != null && top.getValue() >= 2 ? pretty(top.getKey()) : null;
+
+            List<String> parts = new ArrayList<>();
+            if (late.size() >= threshold) {
+                parts.add("late " + late.size() + " times" + (day != null ? " (mostly " + day + "s)" : "")
+                        + ", " + avgLate + " min after start on average");
+            }
+            if (s.absent() >= threshold) parts.add("absent " + s.absent() + " days");
+            out.add(new LatePattern(s.employeeId(), s.employeeCode(), s.employeeName(), s.department(),
+                    late.size(), avgLate, day, top != null ? top.getValue() : 0, s.absent(), s.attendanceRate(),
+                    s.employeeName() + " was " + String.join(" and ", parts) + "."));
+        }
+        out.sort(Comparator.comparingLong(LatePattern::lateCount).thenComparingLong(LatePattern::absent).reversed());
+        return out;
+    }
+
+    private static String pretty(java.time.DayOfWeek d) {
+        String n = d.name().toLowerCase();
+        return Character.toUpperCase(n.charAt(0)) + n.substring(1);
     }
 
     public String summaryCsv(LocalDate from, LocalDate to, String department) {

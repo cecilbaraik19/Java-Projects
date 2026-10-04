@@ -7,6 +7,7 @@ import com.cecil.attendance.model.CorrectionRequest;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.model.LeaveRequest;
 import com.cecil.attendance.model.LeaveType;
+import com.cecil.attendance.model.Notification;
 import com.cecil.attendance.model.Role;
 import com.cecil.attendance.model.Shift;
 import com.cecil.attendance.model.UserAccount;
@@ -24,6 +25,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 /** All request/response shapes used by the REST API. */
 public final class Dtos {
@@ -254,6 +256,38 @@ public final class Dtos {
     }
 
     public record ClientIpView(String ip) {
+    }
+
+    // ---------- Reports & alerts ----------
+
+    /** One day in an employee's month calendar. status = attendance status, HOLIDAY, WEEKEND, FUTURE, NOT_MARKED, ABSENT or NONE. */
+    public record CalendarDay(LocalDate date, String status, LocalTime checkIn, LocalTime checkOut,
+                              double hoursWorked, double overtimeHours, String holidayName, String note) {
+    }
+
+    public record MonthCalendar(Long employeeId, String employeeName, String month, List<CalendarDay> days,
+                                Map<String, Long> totals) {
+    }
+
+    public record LatePattern(Long employeeId, String employeeCode, String employeeName, String department,
+                              long lateCount, long avgMinutesLate, String usualLateDay, long usualLateDayCount,
+                              long absent, double attendanceRate, String message) {
+    }
+
+    public record NotificationView(Long id, Instant createdAt, String recipient, String recipientName, String kind,
+                                   String subject, String body, String status, String error) {
+        public static NotificationView of(Notification n) {
+            return new NotificationView(n.getId(), n.getCreatedAt(), n.getRecipient(), n.getRecipientName(),
+                    n.getKind().name(), n.getSubject(), n.getBody(), n.getStatus().name(), n.getError());
+        }
+    }
+
+    public record AlertSettingsView(boolean smtpConfigured, String from, boolean alertsEnabled,
+                                    String missingCheckInCron, String weeklySummaryCron, String adminEmail,
+                                    int lateThreshold) {
+    }
+
+    public record RunResult(int sent, String message) {
     }
 
     public record PageView<T>(List<T> content, int page, int size, long totalElements, int totalPages) {

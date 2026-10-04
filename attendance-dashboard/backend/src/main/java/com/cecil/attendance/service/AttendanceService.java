@@ -2,6 +2,8 @@ package com.cecil.attendance.service;
 
 import com.cecil.attendance.config.AttendanceProperties;
 import com.cecil.attendance.dto.Dtos.AttendanceView;
+import com.cecil.attendance.dto.Dtos.CalendarDay;
+import com.cecil.attendance.dto.Dtos.MonthCalendar;
 import com.cecil.attendance.dto.Dtos.ManualEntryRequest;
 import com.cecil.attendance.exception.ApiException;
 import com.cecil.attendance.model.AttendanceRecord;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -247,6 +250,38 @@ public class AttendanceService {
 
     public java.util.Optional<AttendanceRecord> findRecord(Long employeeId, LocalDate date) {
         return attendance.findByEmployeeIdAndDate(employeeId, date);
+    }
+
+    /** One employee's month, day by day, including holidays, weekends and days with no record. */
+    @Transactional(readOnly = true)
+    public MonthCalendar monthCalendar(Long employeeId, YearMonth month) {
+        Employee emp = employeeService.get(employeeId);
+        LocalDate first = month.atDay(1);
+        LocalDate last = month.atEndOfMonth();
+        LocalDate today = LocalDate.now(clock);
+        Map<LocalDate, AttendanceRecord> recs = attendance
+                .findByEmployeeIdAndDateBetweenOrderByDateDesc(employeeId, first, last).stream()
+                .collect(Collectors.toMap(AttendanceRecord::getDate, Function.identity(), (a, b) -> a));
+        List<CalendarDay> days = new ArrayList<>();
+        Map<String, Long> totals = new java.util.LinkedHashMap<>();
+        for (LocalDate d = first; !d.isAfter(last); d = d.plusDays(1)) {
+            AttendanceRecord r = recs.get(d);
+            String holiday = calendar.holidayName(d);
+            String status;
+            if (r != null) status = r.getStatus().name();
+            else if (holiday != null) status = "HOLIDAY";
+            else if (!props.isWorkingDay(d)) status = "WEEKEND";
+            else if (d.isAfter(today)) status = "FUTURE";
+            else if (emp.getJoinDate() != null && d.isBefore(emp.getJoinDate())) status = "NONE";
+            else if (d.equals(today)) status = "NOT_MARKED";
+            else status = "ABSENT";
+            totals.merge(status, 1L, Long::sum);
+            days.add(new CalendarDay(d, status,
+                    r != null ? r.getCheckIn() : null, r != null ? r.getCheckOut() : null,
+                    r != null ? r.getHoursWorked() : 0, r != null ? calendar.overtimeHours(r) : 0,
+                    holiday, r != null ? r.getNote() : null));
+        }
+        return new MonthCalendar(emp.getId(), emp.getFullName(), month.toString(), days, totals);
     }
 
     @Transactional(readOnly = true)

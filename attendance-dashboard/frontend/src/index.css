@@ -310,6 +310,35 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; backgr
 .holiday-chip strong { font-size: 15px; }
 .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* ============ Calendar ============ */
+.cal-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.cal-head strong { min-width: 130px; text-align: center; }
+.cal-totals { margin-left: auto; font-size: 12.5px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-wd { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 4px; }
+.cal-cell { min-height: 58px; border-radius: 8px; padding: 5px 6px; display: flex; flex-direction: column; gap: 1px; font-size: 11.5px;
+  background: var(--surface-2); border: 1px solid transparent; position: relative; overflow: hidden; }
+.cal-cell.empty { background: transparent; }
+.cal-cell.today { border-color: var(--accent); }
+.cal-day { font-weight: 650; font-size: 12.5px; }
+.cal-time { color: inherit; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ot { position: absolute; right: 5px; top: 5px; font-size: 10.5px; font-weight: 700; }
+.s-PRESENT { background: var(--st-present-bg); color: var(--st-present); }
+.s-LATE { background: var(--st-late-bg); color: var(--st-late); }
+.s-HALF_DAY { background: var(--st-half-bg); color: var(--st-half); }
+.s-ON_LEAVE { background: var(--st-leave-bg); color: var(--st-leave); }
+.s-ABSENT { background: var(--st-absent-bg); color: var(--st-absent); }
+.s-HOLIDAY { background: var(--accent-soft); color: var(--accent); }
+.s-WEEKEND, .s-FUTURE, .s-NONE { color: var(--muted); background: transparent; border-color: var(--border); }
+.s-FUTURE { border-style: dashed; opacity: 0.7; }
+.s-NOT_MARKED { background: var(--st-none-bg); color: var(--st-none); }
+.cal-swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1.5px solid currentColor; }
+
+/* ============ Reports: needs attention ============ */
+.attention-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.attention-list li { display: grid; grid-template-columns: minmax(180px, 240px) 1fr auto; gap: 16px; align-items: center; padding: 10px 20px; border-top: 1px solid var(--border); font-size: 13.5px; }
+.mail-body { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; background: var(--surface-2); padding: 12px 14px; border-radius: 8px; margin: 0; max-height: 50vh; overflow: auto; }
+
 /* ============ Responsive ============ */
 @media (max-width: 1000px) {
   .grid-2, .grid-2.even { grid-template-columns: 1fr; }
@@ -331,6 +360,9 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; backgr
   .theme-switch button span { display: none; }
   .main { padding: 18px 16px 40px; }
   .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+  .cal-cell { min-height: 44px; padding: 3px 4px; }
+  .cal-time, .cal-ot { display: none; }
+  .attention-list li { grid-template-columns: 1fr; gap: 4px; }
   .kiosk-brand { position: static; margin-bottom: 8px; }
   th, td { padding: 9px 12px; }
 }

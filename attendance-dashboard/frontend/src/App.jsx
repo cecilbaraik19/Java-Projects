@@ -6,7 +6,7 @@ import { api, ROLE_LABEL } from './api.js';
 import { useToast } from './components/Toast.jsx';
 import Modal from './components/Modal.jsx';
 import {
-  IconCalendar, IconCheck, IconClock, IconDashboard, IconEdit, IconKey, IconList, IconLogOut, IconMoon, IconReport,
+  IconAlert, IconCalendar, IconCheck, IconClock, IconDashboard, IconEdit, IconKey, IconList, IconLogOut, IconMoon, IconReport,
   IconLock, IconShield, IconSun, IconUsers,
 } from './components/Icons.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -23,6 +23,7 @@ import Kiosk from './pages/Kiosk.jsx';
 import QrCheckIn from './pages/QrCheckIn.jsx';
 import CheckInSecurity from './pages/CheckInSecurity.jsx';
 import WorkRules from './pages/WorkRules.jsx';
+import Notifications from './pages/Notifications.jsx';
 
 // Full-screen pages without the sidebar
 const BARE = [
@@ -43,6 +44,7 @@ function buildNav(refreshCounts) {
     { to: '/users', label: 'Users', icon: IconShield, roles: ['ADMIN'], element: <Users /> },
     { to: '/work-rules', label: 'Holidays & shifts', icon: IconCalendar, roles: ['ADMIN'], element: <WorkRules /> },
     { to: '/security', label: 'Check-in security', icon: IconLock, roles: ['ADMIN'], element: <CheckInSecurity /> },
+    { to: '/notifications', label: 'Notifications', icon: IconAlert, roles: ['ADMIN'], element: <Notifications /> },
     { to: '/audit', label: 'Audit log', icon: IconList, roles: ['ADMIN'], element: <AuditLog /> },
   ];
 }

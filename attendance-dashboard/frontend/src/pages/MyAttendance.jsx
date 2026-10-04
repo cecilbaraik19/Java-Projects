@@ -4,6 +4,7 @@ import { useAuth } from '../auth.jsx';
 import { useToast } from '../components/Toast.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import CorrectionModal from '../components/CorrectionModal.jsx';
+import CalendarGrid from '../components/CalendarGrid.jsx';
 import { IconEdit, IconLogIn, IconLogOut } from '../components/Icons.jsx';
 
 const RANGES = [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']];
@@ -112,6 +113,11 @@ export default function MyAttendance() {
         <div className="card stat"><div className="stat-label">Hours worked</div><div className="stat-value">{Math.round(hours)}</div></div>
         <div className="card stat"><div className="stat-label">Overtime</div><div className="stat-value">{overtime.toFixed(1)} h</div></div>
       </div>
+
+      <section className="card card-pad" style={{ marginBottom: 18 }}>
+        <h2 style={{ marginBottom: 12 }}>Month view</h2>
+        <CalendarGrid load={api.myCalendar} />
+      </section>
 
       <section className="card">
         <div className="card-head">

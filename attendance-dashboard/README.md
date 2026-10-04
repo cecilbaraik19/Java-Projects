@@ -26,6 +26,15 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
 - **Shifts** – Morning 06:00–14:00, General 09:30–18:00 and Night 22:00–06:00 are created on first start; add your own. Assign one per employee on the Employees page. *Late* is judged against the employee's shift start + grace; night shifts may check out after midnight. Staff without a shift use `attendance.office-start` and `attendance.standard-hours`.
 - **Overtime** – hours beyond the shift's standard hours; every hour on a weekend or holiday counts as overtime. Shown on My Attendance, in Reports and in the CSV export.
 
+- **Month calendar** – every employee's month as a coloured grid (My Attendance, and the calendar icon on the Employees page) with times, overtime and holidays.
+- **Excel & PDF export** – Reports → Export → CSV / Excel / PDF (Apache POI and OpenPDF). Managers export only their department.
+- **Needs attention** – Reports highlights people late or absent ≥ 3 times in the period, e.g. *"late 7 times (mostly Mondays), 38 min after start on average"* (`attendance.alerts.late-threshold`).
+- **Email alerts** (admin → *Notifications*):
+  - Missing check-in reminder on working days (10:30 by default, shift-aware, once per person per day)
+  - Weekly summary to each manager for their department (Mondays 09:00) and optionally to `attendance.alerts.admin-email`
+  - Managers are emailed about new leave requests; employees about approved/rejected leave and corrections
+  - Without SMTP settings, emails are only stored in the Notifications log (status *Logged*) – use "Send … now" to try them. To send for real, uncomment the `spring.mail.*` lines in `application.properties` (for Gmail use an App Password) and set `MAIL_USERNAME` / `MAIL_PASSWORD` environment variables.
+
 ### Testing QR / GPS check-in on a phone
 
 Phones only allow the camera and GPS on **https** pages, so start the frontend in phone mode:
@@ -69,7 +78,7 @@ mvn spring-boot:run
 
 | Layer | Tech |
 |---|---|
-| Backend | Java 17+, Spring Boot 3.3, Spring Security, JWT (jjwt), Spring Data JPA, Bean Validation |
+| Backend | Java 17+, Spring Boot 3.3, Spring Security, JWT (jjwt), Spring Data JPA, Bean Validation, Spring Mail, Apache POI, OpenPDF |
 | Database | H2 (file-based, `backend/data/`) – MySQL ready |
 | Frontend | React 18, Vite 5, React Router, Recharts |
 
@@ -155,6 +164,12 @@ All endpoints except login need the header `Authorization: Bearer <token>`.
 | POST / PUT / DELETE | `/api/holidays[/{id}]` | Manage holidays (admin) |
 | POST | `/api/holidays/national?year=` | Add fixed national holidays (admin) |
 | GET / POST / PUT / DELETE | `/api/shifts[/{id}]` | List (admin/manager) / manage shifts (admin) |
+| GET | `/api/reports/summary.xlsx`, `/summary.pdf` `?from=&to=` | Excel / PDF report |
+| GET | `/api/reports/patterns?from=&to=` | Frequent late/absent ("needs attention") |
+| GET | `/api/me/calendar?month=YYYY-MM` | Own month calendar |
+| GET | `/api/employees/{id}/calendar?month=YYYY-MM` | An employee's month calendar (admin/manager) |
+| GET | `/api/notifications`, `/settings` | Email outbox and alert settings (admin) |
+| POST | `/api/notifications/run/missing-checkin`, `/run/weekly-summary` | Run an alert now (admin) |
 | GET | `/api/employees?activeOnly=false` | List employees |
 | GET | `/api/employees/departments` | Department names |
 | POST / PUT / DELETE | `/api/employees[/{id}]` | Create / update / delete employee |

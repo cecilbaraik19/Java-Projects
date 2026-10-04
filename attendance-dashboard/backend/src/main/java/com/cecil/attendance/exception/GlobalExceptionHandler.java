@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-            IllegalArgumentException.class})
+            IllegalArgumentException.class, java.time.format.DateTimeParseException.class})
     public ResponseEntity<ApiError> handleBadInput(Exception ex) {
         return build(HttpStatus.BAD_REQUEST, "Invalid request data");
     }
