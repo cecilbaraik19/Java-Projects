@@ -254,6 +254,21 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .badge.role-MANAGER { background: var(--st-leave-bg); color: var(--st-leave); }
 .badge.role-EMPLOYEE { background: var(--st-none-bg); color: var(--st-none); }
 
+/* ============ Self-service ============ */
+.nav-link { position: relative; }
+.nav-badge {
+  margin-left: auto; font-style: normal; font-size: 11.5px; font-weight: 700; min-width: 20px; height: 20px;
+  padding: 0 6px; border-radius: 10px; display: inline-grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink);
+}
+.checkin-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 22px; margin-bottom: 18px; }
+.checkin-clock { font-size: 34px; font-weight: 650; letter-spacing: -0.02em; margin: 2px 0 8px; }
+.checkin-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.checkin-actions { display: flex; gap: 8px; align-items: center; }
+.btn-lg { padding: 11px 20px; font-size: 15px; }
+.btn-lg svg { width: 18px; height: 18px; }
+.stat-of { font-size: 15px; font-weight: 500; color: var(--muted); }
+
 /* ============ Responsive ============ */
 @media (max-width: 1000px) {
   .grid-2 { grid-template-columns: 1fr; }
@@ -268,6 +283,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .brand { padding: 0 8px 0 0; }
   .brand span { display: none; }
   .nav-link span { display: none; }
+  .nav-badge { position: absolute; top: 0; right: -2px; min-width: 16px; height: 16px; font-size: 10px; padding: 0 4px; }
   .sidebar-foot { margin: 0 0 0 auto; display: flex; align-items: center; gap: 6px; }
   .user-menu { border: 0; margin: 0; padding: 0; }
   .user-menu .person { display: none; }

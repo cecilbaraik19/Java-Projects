@@ -32,6 +32,14 @@ public class AuditService {
     public static final String CHECK_OUT = "CHECK_OUT";
     public static final String ATTENDANCE_EDITED = "ATTENDANCE_EDITED";
     public static final String ATTENDANCE_DELETED = "ATTENDANCE_DELETED";
+    public static final String LEAVE_REQUESTED = "LEAVE_REQUESTED";
+    public static final String LEAVE_APPROVED = "LEAVE_APPROVED";
+    public static final String LEAVE_REJECTED = "LEAVE_REJECTED";
+    public static final String LEAVE_CANCELLED = "LEAVE_CANCELLED";
+    public static final String CORRECTION_REQUESTED = "CORRECTION_REQUESTED";
+    public static final String CORRECTION_APPROVED = "CORRECTION_APPROVED";
+    public static final String CORRECTION_REJECTED = "CORRECTION_REJECTED";
+    public static final String CORRECTION_CANCELLED = "CORRECTION_CANCELLED";
 
     private final AuditLogRepository repo;
 

@@ -61,6 +61,22 @@ export const api = {
   changePassword: (currentPassword, newPassword) =>
     request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
   myAttendance: (from, to) => request(`/me/attendance?${qs({ from, to })}`),
+  myCheckIn: () => request('/me/check-in', { method: 'POST' }),
+  myCheckOut: () => request('/me/check-out', { method: 'POST' }),
+  myLeaveBalance: (year) => request(`/me/leave-balance?${qs({ year })}`),
+  myLeave: () => request('/me/leave-requests'),
+  applyLeave: (data) => request('/me/leave-requests', { method: 'POST', body: data }),
+  cancelLeave: (id) => request(`/me/leave-requests/${id}/cancel`, { method: 'POST' }),
+  myCorrections: () => request('/me/corrections'),
+  requestCorrection: (data) => request('/me/corrections', { method: 'POST', body: data }),
+  cancelCorrection: (id) => request(`/me/corrections/${id}/cancel`, { method: 'POST' }),
+
+  // approvals (admin / manager)
+  approvalCounts: () => request('/approvals/count'),
+  leaveQueue: (status = 'PENDING') => request(`/approvals/leave?status=${status}`),
+  reviewLeave: (id, approve, comment) => request(`/approvals/leave/${id}`, { method: 'POST', body: { approve, comment } }),
+  correctionQueue: (status = 'PENDING') => request(`/approvals/corrections?status=${status}`),
+  reviewCorrection: (id, approve, comment) => request(`/approvals/corrections/${id}`, { method: 'POST', body: { approve, comment } }),
 
   // users (admin)
   users: () => request('/users'),
@@ -113,3 +129,28 @@ export const STATUS_LABEL = {
 };
 
 export const ROLE_LABEL = { ADMIN: 'Admin', MANAGER: 'Manager', EMPLOYEE: 'Employee' };
+
+export const LEAVE_LABEL = { CASUAL: 'Casual', SICK: 'Sick', EARNED: 'Earned', UNPAID: 'Unpaid' };
+export const REQUEST_LABEL = { PENDING: 'Pending', APPROVED: 'Approved', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+
+/** Mon–Fri days between two ISO dates (inclusive) – a preview; the server is the source of truth. */
+export function countWeekdays(fromIso, toIso) {
+  if (!fromIso || !toIso || toIso < fromIso) return 0;
+  let n = 0;
+  for (let d = new Date(fromIso + 'T00:00:00'); toIso >= toIsoDate(d); d.setDate(d.getDate() + 1)) {
+    const wd = d.getDay();
+    if (wd !== 0 && wd !== 6) n++;
+  }
+  return n;
+}
+function toIsoDate(d) { return toIso(d); }
+
+/** "09:15–18:10", or "09:15–?" when there is no check-out. */
+export const fmtSpan = (a, b) => `${fmtTime(a)}–${b ? fmtTime(b) : '?'}`;
+
+/** Today if it is a weekday, otherwise the next Monday. */
+export function nextWorkdayIso() {
+  const d = new Date();
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return toIso(d);
+}

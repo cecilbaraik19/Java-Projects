@@ -12,6 +12,10 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
 - **Login & roles** – Spring Security + JWT. Admins see everything, managers see only their department, employees see only their own attendance.
 - **Account security** – BCrypt password hashing, lockout after 5 wrong passwords (15 min), password policy, change/reset password (signs out old sessions).
 - **Audit log** – every sign-in, failed login, lockout and data change is recorded with user, time and IP.
+- **Self check-in** – employees and managers check themselves in/out from **My Attendance**.
+- **Leave requests** – apply for Casual (12/yr), Sick (10/yr), Earned (15/yr) or Unpaid leave; balance shown live; manager approves/rejects (rejection needs a reason); approved leave marks the days as *On leave*; upcoming approved leave can be cancelled.
+- **Correction requests** – "I forgot to check out": employee sends the real times, manager approves and the record is updated.
+- **Approvals** – queue with a badge count for managers (own department) and admins. Nobody can approve their own request.
 
 ### Accounts & roles
 
@@ -112,6 +116,15 @@ All endpoints except login need the header `Authorization: Bearer <token>`.
 | GET / POST / PUT / DELETE | `/api/users[/{id}]` | Manage accounts (admin) |
 | POST | `/api/users/{id}/reset-password` | Reset a user's password (admin) |
 | GET | `/api/audit?username=&action=&page=` | Audit log (admin) |
+| POST | `/api/me/check-in`, `/api/me/check-out` | Self check-in / check-out |
+| GET | `/api/me/leave-balance` | Own leave balance for the year |
+| GET / POST | `/api/me/leave-requests` | Own leave requests / apply |
+| POST | `/api/me/leave-requests/{id}/cancel` | Cancel own pending or upcoming leave |
+| GET / POST | `/api/me/corrections` | Own correction requests / request one |
+| GET | `/api/approvals/count` | Pending counts (manager/admin) |
+| GET | `/api/approvals/leave?status=PENDING\|ALL` | Leave approval queue |
+| POST | `/api/approvals/leave/{id}` `{approve, comment}` | Approve / reject leave |
+| GET / POST | `/api/approvals/corrections[/{id}]` | Correction queue / review |
 | GET | `/api/employees?activeOnly=false` | List employees |
 | GET | `/api/employees/departments` | Department names |
 | POST / PUT / DELETE | `/api/employees[/{id}]` | Create / update / delete employee |

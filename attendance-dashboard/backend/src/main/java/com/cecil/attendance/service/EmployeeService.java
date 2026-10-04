@@ -4,6 +4,8 @@ import com.cecil.attendance.dto.Dtos.EmployeeRequest;
 import com.cecil.attendance.exception.ApiException;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.repository.AttendanceRepository;
+import com.cecil.attendance.repository.CorrectionRequestRepository;
+import com.cecil.attendance.repository.LeaveRequestRepository;
 import com.cecil.attendance.repository.EmployeeRepository;
 import com.cecil.attendance.repository.UserAccountRepository;
 import com.cecil.attendance.security.AccessGuard;
@@ -18,13 +20,18 @@ public class EmployeeService {
     private final EmployeeRepository employees;
     private final AttendanceRepository attendance;
     private final UserAccountRepository users;
+    private final LeaveRequestRepository leaves;
+    private final CorrectionRequestRepository corrections;
     private final AuditService audit;
 
     public EmployeeService(EmployeeRepository employees, AttendanceRepository attendance,
-                           UserAccountRepository users, AuditService audit) {
+                           UserAccountRepository users, LeaveRequestRepository leaves,
+                           CorrectionRequestRepository corrections, AuditService audit) {
         this.employees = employees;
         this.attendance = attendance;
         this.users = users;
+        this.leaves = leaves;
+        this.corrections = corrections;
         this.audit = audit;
     }
 
@@ -88,6 +95,8 @@ public class EmployeeService {
             u.invalidateTokens();
             users.save(u);
         });
+        leaves.deleteByEmployeeId(e.getId());
+        corrections.deleteByEmployeeId(e.getId());
         attendance.deleteByEmployeeId(e.getId());
         employees.delete(e);
         audit.log(AuditService.EMPLOYEE_DELETED, "Employee", id, e.getEmployeeCode() + " " + e.getFullName());

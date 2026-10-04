@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useTheme } from './theme.jsx';
 import { useAuth } from './auth.jsx';
@@ -6,7 +6,7 @@ import { api, ROLE_LABEL } from './api.js';
 import { useToast } from './components/Toast.jsx';
 import Modal from './components/Modal.jsx';
 import {
-  IconCalendar, IconClock, IconDashboard, IconKey, IconList, IconLogOut, IconMoon, IconReport,
+  IconCalendar, IconCheck, IconClock, IconDashboard, IconEdit, IconKey, IconList, IconLogOut, IconMoon, IconReport,
   IconShield, IconSun, IconUsers,
 } from './components/Icons.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -16,18 +16,40 @@ import Reports from './pages/Reports.jsx';
 import Users from './pages/Users.jsx';
 import AuditLog from './pages/AuditLog.jsx';
 import MyAttendance from './pages/MyAttendance.jsx';
+import MyRequests from './pages/MyRequests.jsx';
+import Approvals from './pages/Approvals.jsx';
 import Login from './pages/Login.jsx';
 
 // Which pages each role can open
-const NAV = [
-  { to: '/', label: 'Dashboard', icon: IconDashboard, end: true, roles: ['ADMIN', 'MANAGER'], element: <Dashboard /> },
-  { to: '/attendance', label: 'Attendance', icon: IconClock, roles: ['ADMIN', 'MANAGER'], element: <Attendance /> },
-  { to: '/employees', label: 'Employees', icon: IconUsers, roles: ['ADMIN', 'MANAGER'], element: <Employees /> },
-  { to: '/reports', label: 'Reports', icon: IconReport, roles: ['ADMIN', 'MANAGER'], element: <Reports /> },
-  { to: '/my', label: 'My Attendance', icon: IconCalendar, roles: ['EMPLOYEE', 'MANAGER'], element: <MyAttendance /> },
-  { to: '/users', label: 'Users', icon: IconShield, roles: ['ADMIN'], element: <Users /> },
-  { to: '/audit', label: 'Audit log', icon: IconList, roles: ['ADMIN'], element: <AuditLog /> },
-];
+function buildNav(refreshCounts) {
+  return [
+    { to: '/', label: 'Dashboard', icon: IconDashboard, end: true, roles: ['ADMIN', 'MANAGER'], element: <Dashboard /> },
+    { to: '/attendance', label: 'Attendance', icon: IconClock, roles: ['ADMIN', 'MANAGER'], element: <Attendance /> },
+    { to: '/approvals', label: 'Approvals', icon: IconCheck, roles: ['ADMIN', 'MANAGER'], badge: true, element: <Approvals onChanged={refreshCounts} /> },
+    { to: '/employees', label: 'Employees', icon: IconUsers, roles: ['ADMIN', 'MANAGER'], element: <Employees /> },
+    { to: '/reports', label: 'Reports', icon: IconReport, roles: ['ADMIN', 'MANAGER'], element: <Reports /> },
+    { to: '/my', label: 'My Attendance', icon: IconCalendar, roles: ['EMPLOYEE', 'MANAGER'], element: <MyAttendance /> },
+    { to: '/requests', label: 'My Requests', icon: IconEdit, roles: ['EMPLOYEE', 'MANAGER'], element: <MyRequests /> },
+    { to: '/users', label: 'Users', icon: IconShield, roles: ['ADMIN'], element: <Users /> },
+    { to: '/audit', label: 'Audit log', icon: IconList, roles: ['ADMIN'], element: <AuditLog /> },
+  ];
+}
+
+/** Pending approvals count for the nav badge (refreshed every minute). */
+function usePendingCount(enabled) {
+  const [count, setCount] = useState(0);
+  const refresh = useCallback(() => {
+    if (!enabled) return;
+    api.approvalCounts().then((c) => setCount(c.leave + c.corrections)).catch(() => {});
+  }, [enabled]);
+  useEffect(() => {
+    refresh();
+    if (!enabled) return undefined;
+    const id = setInterval(refresh, 60000);
+    return () => clearInterval(id);
+  }, [refresh, enabled]);
+  return [count, refresh];
+}
 
 function ThemeSwitch() {
   const { theme, setTheme } = useTheme();
@@ -106,11 +128,13 @@ function UserMenu() {
 
 export default function App() {
   const { user, checking } = useAuth();
+  const reviewer = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  const [pendingCount, refreshCounts] = usePendingCount(reviewer);
 
   if (checking) return <div className="empty" style={{ paddingTop: '30vh' }}>Loading…</div>;
   if (!user) return <Login />;
 
-  const allowed = NAV.filter((n) => n.roles.includes(user.role));
+  const allowed = buildNav(refreshCounts).filter((n) => n.roles.includes(user.role));
   const home = allowed[0]?.to ?? '/';
 
   return (
@@ -120,9 +144,10 @@ export default function App() {
           <div className="brand-mark"><IconClock width="17" height="17" /></div>
           <span>AttendTrack</span>
         </div>
-        {allowed.map(({ to, label, icon: Icon, end }) => (
+        {allowed.map(({ to, label, icon: Icon, end, badge }) => (
           <NavLink key={to} to={to} end={end} className="nav-link" title={label}>
             <Icon /><span>{label}</span>
+            {badge && pendingCount > 0 && <em className="nav-badge" aria-label={`${pendingCount} pending`}>{pendingCount}</em>}
           </NavLink>
         ))}
         <div className="sidebar-foot">

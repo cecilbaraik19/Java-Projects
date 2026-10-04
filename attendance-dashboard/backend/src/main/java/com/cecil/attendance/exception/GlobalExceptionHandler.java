@@ -29,7 +29,8 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, msg);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            IllegalArgumentException.class})
     public ResponseEntity<ApiError> handleBadInput(Exception ex) {
         return build(HttpStatus.BAD_REQUEST, "Invalid request data");
     }

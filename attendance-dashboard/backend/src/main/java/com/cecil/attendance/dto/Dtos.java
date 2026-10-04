@@ -2,7 +2,10 @@ package com.cecil.attendance.dto;
 
 import com.cecil.attendance.model.AttendanceRecord;
 import com.cecil.attendance.model.AttendanceStatus;
+import com.cecil.attendance.model.CorrectionRequest;
 import com.cecil.attendance.model.Employee;
+import com.cecil.attendance.model.LeaveRequest;
+import com.cecil.attendance.model.LeaveType;
 import com.cecil.attendance.model.Role;
 import com.cecil.attendance.model.UserAccount;
 import jakarta.validation.constraints.Email;
@@ -180,5 +183,50 @@ public final class Dtos {
     }
 
     public record PageView<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
+    }
+
+    // ---------- Leave & correction requests ----------
+
+    public record LeaveCreateRequest(@NotNull LeaveType type, @NotNull LocalDate fromDate, @NotNull LocalDate toDate,
+                                     @NotBlank @Size(max = 300) String reason) {
+    }
+
+    public record CorrectionCreateRequest(@NotNull LocalDate date, @NotNull LocalTime checkIn, LocalTime checkOut,
+                                          @NotBlank @Size(max = 300) String reason) {
+    }
+
+    public record ReviewRequest(@NotNull Boolean approve, @Size(max = 300) String comment) {
+    }
+
+    public record LeaveBalance(String type, Integer allowance, int used, int pending, Integer remaining) {
+    }
+
+    public record ApprovalCounts(long leave, long corrections) {
+    }
+
+    public record LeaveView(Long id, Long employeeId, String employeeCode, String employeeName, String department,
+                            String type, LocalDate fromDate, LocalDate toDate, int days, String reason,
+                            String status, String reviewedBy, Instant reviewedAt, String reviewComment,
+                            Instant createdAt) {
+        public static LeaveView of(LeaveRequest l) {
+            Employee e = l.getEmployee();
+            return new LeaveView(l.getId(), e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
+                    l.getType().name(), l.getFromDate(), l.getToDate(), l.getDays(), l.getReason(),
+                    l.getStatus().name(), l.getReviewedBy(), l.getReviewedAt(), l.getReviewComment(), l.getCreatedAt());
+        }
+    }
+
+    public record CorrectionView(Long id, Long employeeId, String employeeCode, String employeeName, String department,
+                                 LocalDate date, LocalTime previousCheckIn, LocalTime previousCheckOut,
+                                 String previousStatus, LocalTime requestedCheckIn, LocalTime requestedCheckOut,
+                                 String reason, String status, String reviewedBy, Instant reviewedAt,
+                                 String reviewComment, Instant createdAt) {
+        public static CorrectionView of(CorrectionRequest c) {
+            Employee e = c.getEmployee();
+            return new CorrectionView(c.getId(), e.getId(), e.getEmployeeCode(), e.getFullName(), e.getDepartment(),
+                    c.getDate(), c.getPreviousCheckIn(), c.getPreviousCheckOut(), c.getPreviousStatus(),
+                    c.getRequestedCheckIn(), c.getRequestedCheckOut(), c.getReason(), c.getStatus().name(),
+                    c.getReviewedBy(), c.getReviewedAt(), c.getReviewComment(), c.getCreatedAt());
+        }
     }
 }

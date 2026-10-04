@@ -47,6 +47,26 @@ public class AccessGuard {
         if (scope != null && !scope.equals(e.getDepartment())) throw forbidden();
     }
 
+    /** Employee id of the logged-in user, for self-service endpoints. */
+    public Long requireEmployeeId() {
+        Long id = requireUser().employeeId();
+        if (id == null) throw ApiException.badRequest("Your account is not linked to an employee record");
+        return id;
+    }
+
+    /** Reviewers may approve requests in their scope, but never their own (separation of duties). */
+    public void checkCanReview(Employee e) {
+        checkCanManage(e);
+        if (e.getId().equals(requireUser().employeeId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot approve or reject your own request");
+        }
+    }
+
+    /** True if the current reviewer should see this employee's requests in their approval queue. */
+    public boolean isReviewable(Employee e, String scope) {
+        return inScope(e, scope) && !e.getId().equals(requireUser().employeeId());
+    }
+
     public static boolean inScope(Employee e, String scope) {
         return scope == null || scope.equals(e.getDepartment());
     }

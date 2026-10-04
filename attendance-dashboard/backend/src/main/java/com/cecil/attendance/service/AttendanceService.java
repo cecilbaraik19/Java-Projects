@@ -157,6 +157,56 @@ public class AttendanceService {
         return rows;
     }
 
+    /**
+     * Marks the given days as ON_LEAVE (used when a leave request is approved).
+     * Fails if the employee already checked in on any of those days.
+     */
+    @Transactional
+    public void markLeave(Employee emp, List<LocalDate> days, String note) {
+        List<AttendanceRecord> toSave = new ArrayList<>();
+        for (LocalDate d : days) {
+            AttendanceRecord rec = attendance.findByEmployeeIdAndDate(emp.getId(), d)
+                    .orElseGet(() -> new AttendanceRecord(emp, d, AttendanceStatus.ON_LEAVE));
+            if (rec.getCheckIn() != null) {
+                throw ApiException.conflict(emp.getFullName() + " already attended on " + d
+                        + " - edit that day first or change the leave dates");
+            }
+            rec.setStatus(AttendanceStatus.ON_LEAVE);
+            rec.setCheckIn(null);
+            rec.setCheckOut(null);
+            rec.setNote(note);
+            toSave.add(rec);
+        }
+        attendance.saveAll(toSave);
+    }
+
+    /** Removes ON_LEAVE records in a date range (used when an approved leave is cancelled). */
+    @Transactional
+    public void clearLeave(Long employeeId, LocalDate from, LocalDate to) {
+        List<AttendanceRecord> leave = attendance.findByEmployeeIdAndDateBetweenOrderByDateDesc(employeeId, from, to)
+                .stream().filter(r -> r.getStatus() == AttendanceStatus.ON_LEAVE).toList();
+        attendance.deleteAll(leave);
+    }
+
+    /** Sets the times for a day from an approved correction request; status follows the normal rules. */
+    @Transactional
+    public AttendanceView applyCorrection(Employee emp, LocalDate date, LocalTime checkIn, LocalTime checkOut, String note) {
+        AttendanceRecord rec = attendance.findByEmployeeIdAndDate(emp.getId(), date)
+                .orElseGet(() -> new AttendanceRecord(emp, date, AttendanceStatus.PRESENT));
+        rec.setCheckIn(checkIn);
+        rec.setCheckOut(checkOut);
+        rec.setStatus(statusForCheckIn(checkIn));
+        if (checkOut != null && rec.getHoursWorked() < props.halfDayHours()) {
+            rec.setStatus(AttendanceStatus.HALF_DAY);
+        }
+        rec.setNote(note);
+        return AttendanceView.of(attendance.save(rec));
+    }
+
+    public java.util.Optional<AttendanceRecord> findRecord(Long employeeId, LocalDate date) {
+        return attendance.findByEmployeeIdAndDate(employeeId, date);
+    }
+
     @Transactional(readOnly = true)
     public List<AttendanceView> history(Long employeeId, LocalDate from, LocalDate to) {
         employeeService.get(employeeId);
