@@ -1,0 +1,24 @@
+{
+  "type": ["VerifiableCredential", "AcademicCredential"],
+  "version": "1.0",
+  "credential": {
+    "credentialId": "CRED-2026-0CF629B268",
+    "credentialType": "Bachelor's Degree",
+    "studentName": "Priya Verma",
+    "studentId": "2022-BSCIT/027",
+    "program": "B.Sc. Information Technology",
+    "major": "Cloud Computing",
+    "grade": "10.0 CGPA",
+    "issueDate": "2025-06-30",
+    "issuerId": "INST-E3F2E75D",
+    "issuerName": "Demo Institute of Technology"
+  },
+  "proof": {
+    "type": "EcdsaSecp256r1Signature",
+    "credentialHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "signature": "MEUCIQDfakeSignatureMadeByACheaterXXXXXXXXXXXXXXXXXXXXAiAfakefakefakefakefakefakefakefakefake=",
+    "issuerId": "INST-E3F2E75D",
+    "transactionId": "fake",
+    "created": "2026-10-03T10:00:00Z"
+  }
+}

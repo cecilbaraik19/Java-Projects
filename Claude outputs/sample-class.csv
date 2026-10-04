@@ -1,0 +1,11 @@
+credentialType,studentName,studentId,program,major,grade,issueDate
+Bachelor's Degree,Ananya Singh,2022-BSCIT/031,B.Sc. Information Technology,Cyber Security,8.4 CGPA,30-06-2025
+Bachelor's Degree,Rahul Kumar,2022-BSCIT/032,B.Sc. Information Technology,Cloud Computing,7.9 CGPA,30-06-2025
+Bachelor's Degree,Sneha Oraon,2022-BSCIT/033,B.Sc. Information Technology,Data Science,9.2 CGPA,30-06-2025
+Bachelor's Degree,Vikram Mahato,2022-BSCIT/034,B.Sc. Information Technology,Cyber Security,8.1 CGPA,30-06-2025
+Bachelor's Degree,Pooja Tirkey,2022-BSCIT/035,B.Sc. Information Technology,Networking,8.8 CGPA,30-06-2025
+Certificate,Amit Munda,2024-BCA/015,Ethical Hacking Workshop,,A,15-02-2026
+Certificate,Neha Kumari,2024-BCA/016,Ethical Hacking Workshop,,A+,15-02-2026
+Diploma,Rohit Lakra,2023-DIT/007,Diploma in IT,Web Development,First Division,31-05-2026
+Bad Example (no roll ID),,Certificate,Workshop,,B,15-02-2026
+Future Date Example,2024-BCA/099,Certificate,Workshop,,B,01-01-2099
