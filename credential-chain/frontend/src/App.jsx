@@ -11,6 +11,7 @@ import Login from './pages/Login.jsx'
 import BulkIssue from './pages/BulkIssue.jsx'
 import Account from './pages/Account.jsx'
 import { useAuth } from './auth.jsx'
+import ThemeToggle from './theme.jsx'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -60,6 +61,7 @@ export default function App() {
           ))}
         </nav>
         <UserBox />
+        <ThemeToggle />
         <div className="sidebar-foot">SHA-256 · ECDSA P-256 · PoW</div>
       </aside>
       <main className="content">
