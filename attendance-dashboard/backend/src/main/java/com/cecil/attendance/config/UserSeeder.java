@@ -39,13 +39,32 @@ public class UserSeeder implements CommandLineRunner {
         this.adminPassword = adminPassword;
     }
 
+    /** 16 random characters that satisfy the password policy. */
+    private static String randomPassword() {
+        java.security.SecureRandom r = new java.security.SecureRandom();
+        String upper = "ABCDEFGHJKLMNPQRSTUVWXYZ", lower = "abcdefghijkmnopqrstuvwxyz", digits = "23456789";
+        String all = upper + lower + digits;
+        StringBuilder sb = new StringBuilder()
+                .append(upper.charAt(r.nextInt(upper.length())))
+                .append(lower.charAt(r.nextInt(lower.length())))
+                .append(digits.charAt(r.nextInt(digits.length())));
+        while (sb.length() < 16) sb.append(all.charAt(r.nextInt(all.length())));
+        return sb.toString();
+    }
+
     @Override
     @Transactional
     public void run(String... args) {
         if (users.count() > 0) return;
 
-        users.save(new UserAccount("admin", encoder.encode(adminPassword), Role.ADMIN, null));
-        log.warn("Created initial account 'admin' - log in and change its password right away.");
+        String password = adminPassword;
+        if (password == null || password.isBlank()) {
+            password = randomPassword();
+            log.warn("Created initial account 'admin' with generated password: {}  (shown only once - log in and change it)", password);
+        } else {
+            log.warn("Created initial account 'admin' - log in and change its password right away.");
+        }
+        users.save(new UserAccount("admin", encoder.encode(password), Role.ADMIN, null));
 
         if (!props.seedDemoData()) return;
         // Vikram Rao (Tech Lead, Engineering) manages Engineering; Aarav Sharma is an engineer

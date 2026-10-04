@@ -2,6 +2,12 @@
 
 Track employee attendance with a Spring Boot REST API and a React dashboard that has **light and dark mode**.
 
+| Light | Dark |
+|---|---|
+| ![Dashboard light](docs/screenshots/dashboard-light.png) | ![Dashboard dark](docs/screenshots/dashboard-dark.png) |
+
+**Quick start:** `docker compose up -d --build` (see [Run with Docker](#run-with-docker)), or `.\start-dev.ps1` on Windows for development.
+
 ## Features
 
 - **Dashboard** – live KPIs (checked in, late, on leave, absent, attendance rate), a stacked daily-status chart (7/14/30 days), department attendance rates, recent check-ins and who hasn't arrived yet. Auto-refreshes every 30 seconds.
@@ -33,7 +39,9 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
   - Missing check-in reminder on working days (10:30 by default, shift-aware, once per person per day)
   - Weekly summary to each manager for their department (Mondays 09:00) and optionally to `attendance.alerts.admin-email`
   - Managers are emailed about new leave requests; employees about approved/rejected leave and corrections
-  - Without SMTP settings, emails are only stored in the Notifications log (status *Logged*) – use "Send … now" to try them. To send for real, uncomment the `spring.mail.*` lines in `application.properties` (for Gmail use an App Password) and set `MAIL_USERNAME` / `MAIL_PASSWORD` environment variables.
+  - Without SMTP settings, emails are only stored in the Notifications log (status *Logged*) – use "Send … now" to try them. To send for real, uncomment the `spring.mail.*` lines in `application.properties` (for Gmail use an App Password) and set `MAIL_USERNAME` / `MAIL_PASSWORD` environment variables. With Docker, set `MAIL_HOST` etc. in `.env`.
+
+- **Production ready** – MySQL via the `prod` profile, everything configured by environment variables, Docker Compose (MySQL + backend + nginx), health check at `/actuator/health`, the backend refuses to start in prod without a `JWT_SECRET`, and no default admin password in prod. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### Testing QR / GPS check-in on a phone
 
@@ -79,14 +87,20 @@ mvn spring-boot:run
 | Layer | Tech |
 |---|---|
 | Backend | Java 17+, Spring Boot 3.3, Spring Security, JWT (jjwt), Spring Data JPA, Bean Validation, Spring Mail, Apache POI, OpenPDF |
-| Database | H2 (file-based, `backend/data/`) – MySQL ready |
+| Database | H2 (file-based, `backend/data/`) for development, MySQL 8 in production |
+| Deployment | Docker, Docker Compose, nginx, Spring Boot Actuator |
 | Frontend | React 18, Vite 5, React Router, Recharts |
 
 ## Project structure
 
 ```
 attendance-dashboard/
-├── backend/                         Spring Boot API (port 8080)
+├── docker-compose.yml               MySQL + backend + frontend (nginx)
+├── .env.example                     Settings for Docker (copy to .env)
+├── DEPLOYMENT.md                    Server, HTTPS, backups, updates
+├── start-dev.ps1                    Windows: start backend + frontend for development
+├── docs/screenshots/
+├── backend/                         Spring Boot API (port 8080) + Dockerfile
 │   └── src/main/java/com/cecil/attendance/
 │       ├── model/        Employee, AttendanceRecord, AttendanceStatus
 │       ├── repository/   Spring Data JPA repositories
@@ -96,7 +110,7 @@ attendance-dashboard/
 │       ├── config/       Properties, CORS, Clock, demo DataSeeder, UserSeeder
 │       ├── security/     SecurityConfig, JwtService, JwtAuthFilter, AccessGuard, PasswordPolicy
 │       └── exception/    ApiException + global error handler
-└── frontend/                        React app (port 5173)
+└── frontend/                        React app (port 5173) + Dockerfile, nginx.conf
     └── src/
         ├── pages/        Dashboard, Attendance, Employees, Reports
         ├── components/   StatusBadge, Modal, Toast, Icons, ...
@@ -104,9 +118,33 @@ attendance-dashboard/
         └── index.css     Theme tokens (CSS variables) and styles
 ```
 
-## How to run
+## Screenshots
+
+| | |
+|---|---|
+| ![Login](docs/screenshots/login.png) **Login** | ![Approvals](docs/screenshots/approvals-dark.png) **Manager approvals** |
+| ![Kiosk](docs/screenshots/kiosk-dark.png) **Kiosk with rotating QR** | ![Calendar](docs/screenshots/my-calendar-dark.png) **My month calendar** |
+| ![Reports](docs/screenshots/reports-light.png) **Reports with Excel/PDF export** | ![Rules](docs/screenshots/work-rules-light.png) **Holidays & shifts** |
+
+<p align="center"><img src="docs/screenshots/qr-checkin-mobile.png" width="260" alt="QR check-in on a phone"><br><b>QR check-in on a phone</b></p>
+
+## Run with Docker
+
+Needs only **Docker Desktop**. This starts MySQL, the Spring Boot API and the React app behind nginx:
+
+```powershell
+Copy-Item .env.example .env     # then open .env and change every CHANGE_ME
+docker compose up -d --build
+```
+
+Open **http://localhost** and log in as `admin` with the `ADMIN_PASSWORD` you set.
+Data is kept in a Docker volume between restarts. For a real server, HTTPS, backups and updates, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
+
+## How to run (development)
 
 You need **JDK 17+**, **Maven** (or IntelliJ IDEA) and **Node.js 18+**.
+
+**Windows shortcut:** run `.\start-dev.ps1` in the project folder. It opens two windows (backend + frontend) and frees port 8080 if an old backend is still running.
 
 ### 1. Backend
 
@@ -185,8 +223,18 @@ All endpoints except login need the header `Authorization: Bearer <token>`.
 | GET | `/api/reports/summary?from=&to=` | Per-employee summary |
 | GET | `/api/reports/summary.csv?from=&to=` | Same, as CSV download |
 
-## Switching to MySQL
+## Production profile (MySQL)
 
-1. Uncomment the `mysql-connector-j` dependency in `backend/pom.xml`.
-2. In `application.properties`, comment out the H2 lines and uncomment the MySQL lines (set your password).
-3. Restart – tables are created automatically.
+Development uses H2 with no setup. Production uses the `prod` profile (`application-prod.properties`), and every setting comes from environment variables:
+
+| Variable | Meaning |
+|---|---|
+| `SPRING_PROFILES_ACTIVE=prod` | Turns on the production settings |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection |
+| `JWT_SECRET` | 32+ random characters. **Required**: the app won't start without it |
+| `ADMIN_PASSWORD` | First admin password. If empty, a random one is printed once in the log |
+| `SEED_DEMO_DATA` | `true` to add demo employees (default `false` in prod) |
+| `CORS_ORIGINS`, `TRUSTED_PROXIES` | Allowed web origin, and which proxies may set `X-Forwarded-For` |
+| `SPRING_MAIL_HOST`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, `MAIL_FROM`, `ADMIN_EMAIL` | Email (optional) |
+
+In prod, the H2 console is off, error responses don't include stack traces, and only `/actuator/health` is public. Docker Compose sets all of this for you. To run the jar by hand, see [DEPLOYMENT.md](DEPLOYMENT.md#6-running-the-prod-profile-without-docker).

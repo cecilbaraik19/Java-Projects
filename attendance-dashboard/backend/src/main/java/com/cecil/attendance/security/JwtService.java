@@ -29,7 +29,11 @@ public class JwtService {
     private final Duration lifetime;
 
     public JwtService(@Value("${attendance.jwt.secret:}") String secret,
-                      @Value("${attendance.jwt.expiration-minutes:480}") long expirationMinutes) {
+                      @Value("${attendance.jwt.expiration-minutes:480}") long expirationMinutes,
+                      @Value("${attendance.jwt.require-secret:false}") boolean requireSecret) {
+        if (requireSecret && (secret == null || secret.isBlank())) {
+            throw new IllegalStateException("JWT_SECRET must be set (32+ characters) when running in production");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes(secret));
         this.lifetime = Duration.ofMinutes(expirationMinutes);
     }

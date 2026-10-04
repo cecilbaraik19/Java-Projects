@@ -23,16 +23,24 @@ public class MailService {
     private final NotificationRepository outbox;
     private final ObjectProvider<JavaMailSender> senderProvider;
     private final String from;
+    private final boolean hostSet;
 
     public MailService(NotificationRepository outbox, ObjectProvider<JavaMailSender> senderProvider,
-                       @Value("${attendance.mail.from:AttendTrack <no-reply@attendtrack.local>}") String from) {
+                       @Value("${attendance.mail.from:AttendTrack <no-reply@attendtrack.local>}") String from,
+                       @Value("${spring.mail.host:}") String host) {
         this.outbox = outbox;
         this.senderProvider = senderProvider;
         this.from = from;
+        // Docker passes SPRING_MAIL_HOST="" when email is not set up; treat blank as "no SMTP"
+        this.hostSet = host != null && !host.isBlank();
+    }
+
+    private JavaMailSender sender() {
+        return hostSet ? senderProvider.getIfAvailable() : null;
     }
 
     public boolean isSmtpConfigured() {
-        return senderProvider.getIfAvailable() != null;
+        return sender() != null;
     }
 
     public String from() {
@@ -44,7 +52,7 @@ public class MailService {
         // strip line breaks from the subject (header-injection safety)
         String cleanSubject = subject == null ? "" : subject.replaceAll("[\\r\\n]+", " ");
         Notification n = new Notification(to, truncate(toName, 100), kind, truncate(cleanSubject, 200), truncate(body, 4000));
-        JavaMailSender sender = senderProvider.getIfAvailable();
+        JavaMailSender sender = sender();
         if (sender == null) {
             n.setStatus(Notification.Status.LOGGED);
         } else {

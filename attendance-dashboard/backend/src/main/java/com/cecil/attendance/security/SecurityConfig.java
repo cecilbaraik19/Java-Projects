@@ -41,6 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/auth/login")).permitAll()
                         .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                         .requestMatchers(antMatcher("/error")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/actuator/health")).permitAll()
+                        .requestMatchers(antMatcher("/actuator/**")).denyAll()
                         .requestMatchers(antMatcher("/api/**")).authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(e -> e
