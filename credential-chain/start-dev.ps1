@@ -26,11 +26,12 @@ function Info($msg)  { Write-Host "  $msg" -ForegroundColor Cyan }
 function Ok($msg)    { Write-Host "  [OK] $msg" -ForegroundColor Green }
 function Fail($msg)  { Write-Host "  [X]  $msg" -ForegroundColor Red; Read-Host "  Press Enter to close"; exit 1 }
 
-# Opens a new PowerShell window running $script. -EncodedCommand avoids quoting problems with
-# folder names that contain spaces (like "Java Projects").
-function Start-Window([string]$script) {
-    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))
-    Start-Process powershell -ArgumentList '-NoExit', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', $encoded
+# Opens a new console window (cmd /k keeps it open so errors stay visible).
+# Settings are passed as environment variables, which the new window inherits,
+# so folder names with spaces (like "Java Projects") cause no quoting problems.
+function Start-Console([string]$title, [string]$workDir, [string]$exe, [string]$exeArgs) {
+    $line = "/k `"title $title & call `"$exe`" $exeArgs`""
+    Start-Process -FilePath $env:ComSpec -ArgumentList $line -WorkingDirectory $workDir
 }
 
 function Test-Port([int]$port) {
@@ -71,19 +72,30 @@ if (Test-Port 5173) { Fail "Port 5173 is already in use. Close the other 'npm ru
 Ok "Ports 8080 and 5173 are free"
 
 # ---------- 4. Start the backend in its own window ----------
-$profileArg = ''
-if ($Mysql) { $profileArg = "'-Dspring-boot.run.profiles=mysql'"; Info "Database: MySQL" } else { Info "Database: H2 (default)" }
-
-# workingDirectory = project root, so the H2 database is the same 'data' folder IntelliJ uses
-$backendCmd = "`$Host.UI.RawUI.WindowTitle = 'CredentialChain backend'; Set-Location -LiteralPath '$backend'; & '$mvn' spring-boot:run '-Dspring-boot.run.workingDirectory=$root' $profileArg"
-Start-Window $backendCmd
+if ($Mysql) {
+    Info "Database: MySQL"
+    $env:SPRING_PROFILES_ACTIVE = 'mysql'
+    Remove-Item Env:SPRING_DATASOURCE_URL -ErrorAction SilentlyContinue
+} else {
+    Info "Database: H2 (data folder: $root\data)"
+    # same 'data' folder that IntelliJ uses, so existing certificates are kept
+    $dbPath = (Join-Path $root 'data\credchain') -replace '\\', '/'
+    $env:SPRING_DATASOURCE_URL = "jdbc:h2:file:$dbPath;AUTO_SERVER=TRUE"
+    Remove-Item Env:SPRING_PROFILES_ACTIVE -ErrorAction SilentlyContinue
+}
+Start-Console 'CredentialChain backend' $backend $mvn 'spring-boot:run'
 Ok "Backend starting in a new window..."
 
 # ---------- 5. Start the frontend in its own window ----------
-$install = ''
-if (-not (Test-Path (Join-Path $frontend 'node_modules'))) { $install = 'npm install; '; Info "First run: installing frontend packages" }
-$frontendCmd = "`$Host.UI.RawUI.WindowTitle = 'CredentialChain frontend'; Set-Location -LiteralPath '$frontend'; ${install}npm run dev"
-Start-Window $frontendCmd
+$npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
+if (-not $npm) { Fail "npm.cmd not found. Reinstall Node.js." }
+if (-not (Test-Path (Join-Path $frontend 'node_modules'))) {
+    Info "First run: installing frontend packages (1-2 minutes)..."
+    Push-Location $frontend
+    & $npm install
+    Pop-Location
+}
+Start-Console 'CredentialChain frontend' $frontend $npm 'run dev'
 Ok "Frontend starting in a new window..."
 
 # ---------- 6. Wait until both are ready ----------
