@@ -5,6 +5,8 @@ import com.cecil.attendance.exception.ApiException;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.repository.AttendanceRepository;
 import com.cecil.attendance.repository.EmployeeRepository;
+import com.cecil.attendance.repository.UserAccountRepository;
+import com.cecil.attendance.security.AccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,21 +17,30 @@ public class EmployeeService {
 
     private final EmployeeRepository employees;
     private final AttendanceRepository attendance;
+    private final UserAccountRepository users;
+    private final AuditService audit;
 
-    public EmployeeService(EmployeeRepository employees, AttendanceRepository attendance) {
+    public EmployeeService(EmployeeRepository employees, AttendanceRepository attendance,
+                           UserAccountRepository users, AuditService audit) {
         this.employees = employees;
         this.attendance = attendance;
+        this.users = users;
+        this.audit = audit;
     }
 
-    public List<Employee> findAll(boolean activeOnly) {
-        return activeOnly ? employees.findByActiveTrueOrderByFullNameAsc() : employees.findAllByOrderByFullNameAsc();
+    /** @param department null = all departments, otherwise only that department */
+    public List<Employee> findAll(boolean activeOnly, String department) {
+        List<Employee> list = activeOnly ? employees.findByActiveTrueOrderByFullNameAsc()
+                : employees.findAllByOrderByFullNameAsc();
+        return list.stream().filter(e -> AccessGuard.inScope(e, department)).toList();
     }
 
     public Employee get(Long id) {
         return employees.findById(id).orElseThrow(() -> ApiException.notFound("Employee " + id + " not found"));
     }
 
-    public List<String> departments() {
+    public List<String> departments(String department) {
+        if (department != null) return AccessGuard.NO_DEPARTMENT.equals(department) ? List.of() : List.of(department);
         return employees.findDistinctDepartments();
     }
 
@@ -43,7 +54,10 @@ public class EmployeeService {
         }
         Employee e = new Employee();
         apply(e, req);
-        return employees.save(e);
+        Employee saved = employees.save(e);
+        audit.log(AuditService.EMPLOYEE_CREATED, "Employee", saved.getId(),
+                saved.getEmployeeCode() + " " + saved.getFullName());
+        return saved;
     }
 
     @Transactional
@@ -58,14 +72,25 @@ public class EmployeeService {
             throw ApiException.conflict("Email " + req.email() + " already exists");
         }
         apply(e, req);
-        return employees.save(e);
+        Employee saved = employees.save(e);
+        audit.log(AuditService.EMPLOYEE_UPDATED, "Employee", saved.getId(),
+                saved.getEmployeeCode() + " " + saved.getFullName() + (saved.isActive() ? "" : " (inactive)"));
+        return saved;
     }
 
     @Transactional
     public void delete(Long id) {
         Employee e = get(id);
+        // keep the login account but unlink it, so the admin can re-link or delete it
+        users.findByEmployeeId(e.getId()).ifPresent(u -> {
+            u.setEmployee(null);
+            u.setEnabled(false);
+            u.invalidateTokens();
+            users.save(u);
+        });
         attendance.deleteByEmployeeId(e.getId());
         employees.delete(e);
+        audit.log(AuditService.EMPLOYEE_DELETED, "Employee", id, e.getEmployeeCode() + " " + e.getFullName());
     }
 
     private void apply(Employee e, EmployeeRequest req) {

@@ -3,13 +3,18 @@ package com.cecil.attendance.dto;
 import com.cecil.attendance.model.AttendanceRecord;
 import com.cecil.attendance.model.AttendanceStatus;
 import com.cecil.attendance.model.Employee;
+import com.cecil.attendance.model.Role;
+import com.cecil.attendance.model.UserAccount;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 /** All request/response shapes used by the REST API. */
 public final class Dtos {
@@ -123,5 +128,57 @@ public final class Dtos {
     }
 
     public record ApiError(int status, String error, String message) {
+    }
+
+    // ---------- Auth & users ----------
+
+    public record LoginRequest(@NotBlank @Size(max = 40) String username,
+                               @NotBlank @Size(max = 128) String password) {
+    }
+
+    public record MeView(Long id, String username, String role, Long employeeId,
+                         String employeeName, String department) {
+        public static MeView of(UserAccount u) {
+            Employee e = u.getEmployee();
+            return new MeView(u.getId(), u.getUsername(), u.getRole().name(),
+                    e != null ? e.getId() : null, e != null ? e.getFullName() : null,
+                    e != null ? e.getDepartment() : null);
+        }
+    }
+
+    public record LoginResponse(String token, long expiresInSeconds, MeView user) {
+    }
+
+    public record ChangePasswordRequest(@NotBlank @Size(max = 128) String currentPassword,
+                                        @NotBlank @Size(max = 128) String newPassword) {
+    }
+
+    public record CreateUserRequest(
+            @NotBlank @Size(min = 3, max = 40) @Pattern(regexp = "^[A-Za-z0-9._-]+$",
+                    message = "may only contain letters, digits, dot, dash and underscore") String username,
+            @NotBlank @Size(max = 128) String password,
+            @NotNull Role role,
+            Long employeeId
+    ) {
+    }
+
+    public record UpdateUserRequest(@NotNull Role role, @NotNull Boolean enabled, Long employeeId) {
+    }
+
+    public record ResetPasswordRequest(@NotBlank @Size(max = 128) String newPassword) {
+    }
+
+    public record UserView(Long id, String username, String role, boolean enabled, boolean locked,
+                           Long employeeId, String employeeName, String department,
+                           Instant lastLoginAt, Instant createdAt) {
+        public static UserView of(UserAccount u, Instant now) {
+            Employee e = u.getEmployee();
+            return new UserView(u.getId(), u.getUsername(), u.getRole().name(), u.isEnabled(), u.isLocked(now),
+                    e != null ? e.getId() : null, e != null ? e.getFullName() : null,
+                    e != null ? e.getDepartment() : null, u.getLastLoginAt(), u.getCreatedAt());
+        }
+    }
+
+    public record PageView<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
     }
 }

@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { api, fmtDate, fmtTime, STATUS_LABEL } from '../api.js';
 import { useChartColors } from '../theme.jsx';
 import ChartTooltip from '../components/ChartTooltip.jsx';
+import { useAuth } from '../auth.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import Person from '../components/Person.jsx';
 
@@ -30,6 +31,8 @@ function Stat({ label, value, sub, color }) {
 export default function Dashboard() {
   const c = useChartColors();
   const now = useNow();
+  const { user } = useAuth();
+  const scope = user.role === 'MANAGER' ? `${user.department ?? 'No'} team · ` : '';
   const [days, setDays] = useState(14);
   const [stats, setStats] = useState(null);
   const [trend, setTrend] = useState([]);
@@ -42,8 +45,8 @@ export default function Dashboard() {
       const [s, t, d, b] = await Promise.all([api.stats(), api.trend(days), api.deptStats(), api.daily()]);
       setStats(s); setTrend(t); setDepts(d); setBoard(b); setError('');
     } catch (e) {
-      setError(e.message.includes('fetch') || e.message.includes('500') || e.message.includes('502') || e.message.includes('504')
-        ? 'Cannot reach the backend. Is Spring Boot running on port 8080?' : e.message);
+      if (e.status === 401) return; // handled globally (back to login)
+      setError(!e.status || e.status >= 500 ? 'Cannot reach the backend. Is Spring Boot running on port 8080?' : e.message);
     }
   }, [days]);
 
@@ -62,7 +65,7 @@ export default function Dashboard() {
       <div className="page-head">
         <div>
           <h1>Dashboard</h1>
-          <p>{now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <p>{scope}{now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="head-actions">
           <span className="clock">{now.toLocaleTimeString('en-IN')}</span>

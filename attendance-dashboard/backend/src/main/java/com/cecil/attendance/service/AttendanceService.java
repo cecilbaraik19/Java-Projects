@@ -9,6 +9,7 @@ import com.cecil.attendance.model.AttendanceStatus;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.repository.AttendanceRepository;
 import com.cecil.attendance.repository.EmployeeRepository;
+import com.cecil.attendance.security.AccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,14 +32,17 @@ public class AttendanceService {
     private final EmployeeService employeeService;
     private final AttendanceProperties props;
     private final Clock clock;
+    private final AuditService audit;
 
     public AttendanceService(AttendanceRepository attendance, EmployeeRepository employees,
-                             EmployeeService employeeService, AttendanceProperties props, Clock clock) {
+                             EmployeeService employeeService, AttendanceProperties props, Clock clock,
+                             AuditService audit) {
         this.attendance = attendance;
         this.employees = employees;
         this.employeeService = employeeService;
         this.props = props;
         this.clock = clock;
+        this.audit = audit;
     }
 
     /** Status decided purely from the check-in time. */
@@ -64,7 +68,10 @@ public class AttendanceService {
         }
         rec.setCheckIn(now);
         rec.setStatus(statusForCheckIn(now));
-        return AttendanceView.of(attendance.save(rec));
+        AttendanceRecord saved = attendance.save(rec);
+        audit.log(AuditService.CHECK_IN, "Attendance", saved.getId(),
+                emp.getEmployeeCode() + " at " + now + " (" + saved.getStatus() + ")");
+        return AttendanceView.of(saved);
     }
 
     @Transactional
@@ -83,7 +90,10 @@ public class AttendanceService {
         if (rec.getHoursWorked() < props.halfDayHours()) {
             rec.setStatus(AttendanceStatus.HALF_DAY);
         }
-        return AttendanceView.of(attendance.save(rec));
+        AttendanceRecord saved = attendance.save(rec);
+        audit.log(AuditService.CHECK_OUT, "Attendance", saved.getId(),
+                emp.getEmployeeCode() + " at " + now + " (" + saved.getHoursWorked() + " h)");
+        return AttendanceView.of(saved);
     }
 
     /** Admin create-or-update for any date (corrections, leave, marking absent). */
@@ -106,22 +116,38 @@ public class AttendanceService {
         rec.setCheckIn(needsTimes ? req.checkIn() : null);
         rec.setCheckOut(needsTimes ? req.checkOut() : null);
         rec.setNote(req.note());
-        return AttendanceView.of(attendance.save(rec));
+        AttendanceRecord saved = attendance.save(rec);
+        audit.log(AuditService.ATTENDANCE_EDITED, "Attendance", saved.getId(),
+                emp.getEmployeeCode() + " " + req.date() + " -> " + req.status()
+                        + (needsTimes ? " " + req.checkIn() + "-" + (req.checkOut() == null ? "?" : req.checkOut()) : ""));
+        return AttendanceView.of(saved);
+    }
+
+    public AttendanceRecord getRecord(Long recordId) {
+        return attendance.findById(recordId)
+                .orElseThrow(() -> ApiException.notFound("Record " + recordId + " not found"));
     }
 
     @Transactional
     public void delete(Long recordId) {
-        if (!attendance.existsById(recordId)) throw ApiException.notFound("Record " + recordId + " not found");
-        attendance.deleteById(recordId);
+        AttendanceRecord rec = getRecord(recordId);
+        attendance.delete(rec);
+        audit.log(AuditService.ATTENDANCE_DELETED, "Attendance", recordId,
+                rec.getEmployee().getEmployeeCode() + " " + rec.getDate() + " (" + rec.getStatus() + ")");
     }
 
-    /** Every active employee for the date, with NOT_MARKED rows for anyone without a record. */
+    /**
+     * Every active employee for the date, with NOT_MARKED rows for anyone without a record.
+     * @param department null = all departments
+     */
     @Transactional(readOnly = true)
-    public List<AttendanceView> dailyBoard(LocalDate date) {
+    public List<AttendanceView> dailyBoard(LocalDate date, String department) {
         Map<Long, AttendanceRecord> byEmp = attendance.findByDateOrderByCheckInAsc(date).stream()
+                .filter(r -> AccessGuard.inScope(r.getEmployee(), department))
                 .collect(Collectors.toMap(r -> r.getEmployee().getId(), Function.identity()));
         List<AttendanceView> rows = new ArrayList<>();
         for (Employee e : employees.findByActiveTrueOrderByFullNameAsc()) {
+            if (!AccessGuard.inScope(e, department)) continue;
             AttendanceRecord r = byEmp.remove(e.getId());
             rows.add(r != null ? AttendanceView.of(r) : AttendanceView.notMarked(e, date));
         }

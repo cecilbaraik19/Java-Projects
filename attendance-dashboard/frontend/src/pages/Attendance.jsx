@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, fmtDate, fmtTime, STATUS_LABEL, todayIso } from '../api.js';
 import { useToast } from '../components/Toast.jsx';
+import { useAuth } from '../auth.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import Person from '../components/Person.jsx';
 import Modal from '../components/Modal.jsx';
@@ -67,6 +68,7 @@ function EditRecordModal({ row, date, onClose, onSaved }) {
 
 export default function Attendance() {
   const toast = useToast();
+  const isAdmin = useAuth().user.role === 'ADMIN';
   const [date, setDate] = useState(todayIso());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function Attendance() {
                         <button className="btn btn-sm" disabled={busy === r.employeeId}
                                 onClick={() => act(api.checkOut, r, 'checked out')}><IconLogOut />Check out</button>)}
                       <button className="icon-btn" title="Edit record" aria-label="Edit record" onClick={() => setEditing(r)}><IconEdit /></button>
-                      {r.id && <button className="icon-btn" title="Clear record" aria-label="Clear record" onClick={() => remove(r)}><IconTrash /></button>}
+                      {isAdmin && r.id && <button className="icon-btn" title="Clear record" aria-label="Clear record" onClick={() => remove(r)}><IconTrash /></button>}
                     </div>
                   </td>
                 </tr>

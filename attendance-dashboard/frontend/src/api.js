@@ -1,8 +1,26 @@
-// Thin wrapper around fetch for the Spring Boot REST API.
+// Thin wrapper around fetch for the Spring Boot REST API, with JWT auth.
+
+const TOKEN_KEY = 'auth_token';
+
+export function getToken() {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+}
+export function setToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch { /* storage blocked */ }
+}
+
+function authHeaders() {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 async function request(path, options = {}) {
   const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   if (!res.ok) {
@@ -11,19 +29,56 @@ async function request(path, options = {}) {
       const err = await res.json();
       if (err.message) message = err.message;
     } catch { /* not JSON */ }
-    throw new Error(message);
+    // Session expired / revoked: tell the app to show the login screen
+    if (res.status === 401 && !path.startsWith('/auth/login')) {
+      window.dispatchEvent(new CustomEvent('auth:expired'));
+    }
+    const error = new Error(message);
+    error.status = res.status;
+    throw error;
   }
   return res.status === 204 ? null : res.json();
 }
 
+/** Downloads a file from an authenticated endpoint (plain <a href> can't send the token). */
+async function download(path, filename) {
+  const res = await fetch(`/api${path}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const qs = (params) => new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')).toString();
+
 export const api = {
+  // auth
+  login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password } }),
+  me: () => request('/auth/me'),
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
+  myAttendance: (from, to) => request(`/me/attendance?${qs({ from, to })}`),
+
+  // users (admin)
+  users: () => request('/users'),
+  createUser: (data) => request('/users', { method: 'POST', body: data }),
+  updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: data }),
+  resetPassword: (id, newPassword) => request(`/users/${id}/reset-password`, { method: 'POST', body: { newPassword } }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+
+  // audit log (admin)
+  audit: (params) => request(`/audit?${qs(params)}`),
+
   // employees
   employees: (activeOnly = false) => request(`/employees?activeOnly=${activeOnly}`),
   departments: () => request('/employees/departments'),
   createEmployee: (data) => request('/employees', { method: 'POST', body: data }),
   updateEmployee: (id, data) => request(`/employees/${id}`, { method: 'PUT', body: data }),
   deleteEmployee: (id) => request(`/employees/${id}`, { method: 'DELETE' }),
-  employeeHistory: (id, from, to) => request(`/employees/${id}/attendance?from=${from}&to=${to}`),
+  employeeHistory: (id, from, to) => request(`/employees/${id}/attendance?${qs({ from, to })}`),
 
   // attendance
   daily: (date) => request(`/attendance${date ? `?date=${date}` : ''}`),
@@ -36,8 +91,8 @@ export const api = {
   stats: (date) => request(`/reports/stats${date ? `?date=${date}` : ''}`),
   trend: (days = 14) => request(`/reports/trend?days=${days}`),
   deptStats: (date) => request(`/reports/departments${date ? `?date=${date}` : ''}`),
-  summary: (from, to) => request(`/reports/summary?from=${from}&to=${to}`),
-  summaryCsvUrl: (from, to) => `/api/reports/summary.csv?from=${from}&to=${to}`,
+  summary: (from, to) => request(`/reports/summary?${qs({ from, to })}`),
+  downloadSummaryCsv: (from, to) => download(`/reports/summary.csv?${qs({ from, to })}`, `attendance_${from}_to_${to}.csv`),
 };
 
 // ---------- small shared helpers ----------
@@ -49,8 +104,12 @@ export function toIso(d) {
 export const fmtTime = (t) => (t ? t.slice(0, 5) : '—');
 export const fmtDate = (iso, opts = { day: 'numeric', month: 'short' }) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', opts);
+export const fmtDateTime = (iso) =>
+  iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
 
 export const STATUS_LABEL = {
   PRESENT: 'Present', LATE: 'Late', HALF_DAY: 'Half day', ABSENT: 'Absent',
   ON_LEAVE: 'On leave', NOT_MARKED: 'Not marked',
 };
+
+export const ROLE_LABEL = { ADMIN: 'Admin', MANAGER: 'Manager', EMPLOYEE: 'Employee' };

@@ -11,6 +11,7 @@ import com.cecil.attendance.model.AttendanceStatus;
 import com.cecil.attendance.model.Employee;
 import com.cecil.attendance.repository.AttendanceRepository;
 import com.cecil.attendance.repository.EmployeeRepository;
+import com.cecil.attendance.security.AccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +38,21 @@ public class ReportService {
         this.clock = clock;
     }
 
-    public DashboardStats stats(LocalDate date) {
-        List<AttendanceRecord> records = attendance.findByDateOrderByCheckInAsc(date);
-        Counts c = Counts.of(records, employees.countByActiveTrue());
+    /** Active employees, optionally limited to one department (null = all). */
+    private List<Employee> activeEmployees(String department) {
+        return employees.findByActiveTrueOrderByFullNameAsc().stream()
+                .filter(e -> AccessGuard.inScope(e, department)).toList();
+    }
+
+    private List<AttendanceRecord> recordsOn(LocalDate date, String department) {
+        return attendance.findByDateOrderByCheckInAsc(date).stream()
+                .filter(r -> AccessGuard.inScope(r.getEmployee(), department)).toList();
+    }
+
+    /** @param department null = whole company, otherwise one department */
+    public DashboardStats stats(LocalDate date, String department) {
+        List<AttendanceRecord> records = recordsOn(date, department);
+        Counts c = Counts.of(records, activeEmployees(department).size());
 
         OptionalDouble avgMinutes = records.stream()
                 .filter(r -> r.getCheckIn() != null)
@@ -55,7 +68,7 @@ public class ReportService {
     }
 
     /** Last {@code days} working days ending today (today is always included). */
-    public List<TrendPoint> trend(int days) {
+    public List<TrendPoint> trend(int days, String department) {
         if (days < 1 || days > 90) throw ApiException.badRequest("days must be between 1 and 90");
         LocalDate today = LocalDate.now(clock);
         List<LocalDate> dates = new ArrayList<>();
@@ -68,8 +81,9 @@ public class ReportService {
         Collections.reverse(dates);
 
         Map<LocalDate, List<AttendanceRecord>> byDate = attendance.findByDateBetween(dates.get(0), today)
-                .stream().collect(Collectors.groupingBy(AttendanceRecord::getDate));
-        long total = employees.countByActiveTrue();
+                .stream().filter(r -> AccessGuard.inScope(r.getEmployee(), department))
+                .collect(Collectors.groupingBy(AttendanceRecord::getDate));
+        long total = activeEmployees(department).size();
 
         return dates.stream().map(date -> {
             Counts c = Counts.of(byDate.getOrDefault(date, List.of()), total);
@@ -77,10 +91,10 @@ public class ReportService {
         }).toList();
     }
 
-    public List<DepartmentStat> departments(LocalDate date) {
-        Map<String, List<Employee>> byDept = employees.findByActiveTrueOrderByFullNameAsc().stream()
+    public List<DepartmentStat> departments(LocalDate date, String department) {
+        Map<String, List<Employee>> byDept = activeEmployees(department).stream()
                 .collect(Collectors.groupingBy(Employee::getDepartment, TreeMap::new, Collectors.toList()));
-        Map<Long, AttendanceRecord> recs = attendance.findByDateOrderByCheckInAsc(date).stream()
+        Map<Long, AttendanceRecord> recs = recordsOn(date, department).stream()
                 .collect(Collectors.toMap(r -> r.getEmployee().getId(), r -> r));
 
         return byDept.entrySet().stream().map(en -> {
@@ -91,7 +105,7 @@ public class ReportService {
         }).toList();
     }
 
-    public List<EmployeeSummary> summary(LocalDate from, LocalDate to) {
+    public List<EmployeeSummary> summary(LocalDate from, LocalDate to, String department) {
         if (to.isBefore(from)) throw ApiException.badRequest("'to' must not be before 'from'");
         LocalDate today = LocalDate.now(clock);
         LocalDate end = to.isAfter(today) ? today : to;
@@ -101,6 +115,7 @@ public class ReportService {
 
         List<EmployeeSummary> out = new ArrayList<>();
         for (Employee e : employees.findAllByOrderByFullNameAsc()) {
+            if (!AccessGuard.inScope(e, department)) continue;
             List<AttendanceRecord> recs = byEmp.getOrDefault(e.getId(), List.of());
             if (!e.isActive() && recs.isEmpty()) continue;
 
@@ -119,10 +134,10 @@ public class ReportService {
         return out;
     }
 
-    public String summaryCsv(LocalDate from, LocalDate to) {
+    public String summaryCsv(LocalDate from, LocalDate to, String department) {
         StringBuilder sb = new StringBuilder(
                 "Code,Name,Department,Working Days,Present,Late,Half Day,On Leave,Absent,Total Hours,Attendance %\n");
-        for (EmployeeSummary s : summary(from, to)) {
+        for (EmployeeSummary s : summary(from, to, department)) {
             sb.append(csv(s.employeeCode())).append(',').append(csv(s.employeeName())).append(',')
                     .append(csv(s.department())).append(',').append(s.workingDays()).append(',')
                     .append(s.present()).append(',').append(s.late()).append(',').append(s.halfDay()).append(',')

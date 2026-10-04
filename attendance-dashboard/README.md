@@ -9,6 +9,26 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
 - **Employees** – add, edit, deactivate or delete employees; view each person's last 30 days.
 - **Reports** – per-employee summary for any date range (present, late, half day, leave, absent, hours, %), sortable, filter by department, **export to CSV**.
 - **Light / Dark mode** – toggle in the sidebar; follows your OS setting on first visit and remembers your choice.
+- **Login & roles** – Spring Security + JWT. Admins see everything, managers see only their department, employees see only their own attendance.
+- **Account security** – BCrypt password hashing, lockout after 5 wrong passwords (15 min), password policy, change/reset password (signs out old sessions).
+- **Audit log** – every sign-in, failed login, lockout and data change is recorded with user, time and IP.
+
+### Accounts & roles
+
+| Username | Password | Role | Can access |
+|---|---|---|---|
+| `admin` | `Admin@123` | Admin | Everything, plus Users and Audit log |
+| `manager` | `Manager@123` | Manager (Vikram Rao) | Dashboard, attendance, employees and reports for **Engineering** only, plus their own attendance |
+| `employee` | `Employee@123` | Employee (Aarav Sharma) | **My Attendance** only |
+
+These are created on first start. **Change the admin password** after logging in (key icon at the bottom of the sidebar).
+For real use, set environment variables before starting the backend:
+
+```powershell
+$env:JWT_SECRET = "a-long-random-string-of-at-least-32-characters"
+$env:ADMIN_PASSWORD = "YourStrongPassword1"
+mvn spring-boot:run
+```
 
 ### Attendance rules (change in `application.properties`)
 
@@ -23,7 +43,7 @@ Track employee attendance with a Spring Boot REST API and a React dashboard that
 
 | Layer | Tech |
 |---|---|
-| Backend | Java 17+, Spring Boot 3.3, Spring Data JPA, Bean Validation |
+| Backend | Java 17+, Spring Boot 3.3, Spring Security, JWT (jjwt), Spring Data JPA, Bean Validation |
 | Database | H2 (file-based, `backend/data/`) – MySQL ready |
 | Frontend | React 18, Vite 5, React Router, Recharts |
 
@@ -38,7 +58,8 @@ attendance-dashboard/
 │       ├── service/      EmployeeService, AttendanceService, ReportService
 │       ├── controller/   REST controllers
 │       ├── dto/          Request/response records
-│       ├── config/       Properties, CORS, Clock, demo DataSeeder
+│       ├── config/       Properties, CORS, Clock, demo DataSeeder, UserSeeder
+│       ├── security/     SecurityConfig, JwtService, JwtAuthFilter, AccessGuard, PasswordPolicy
 │       └── exception/    ApiException + global error handler
 └── frontend/                        React app (port 5173)
     └── src/
@@ -80,8 +101,17 @@ Open **http://localhost:5173**. Vite forwards `/api` calls to the backend on por
 
 ## REST API
 
+All endpoints except login need the header `Authorization: Bearer <token>`.
+
 | Method | Endpoint | Purpose |
 |---|---|---|
+| POST | `/api/auth/login` | Get a JWT `{username, password}` |
+| GET | `/api/auth/me` | Current user |
+| POST | `/api/auth/change-password` | Change own password (returns a new token) |
+| GET | `/api/me/attendance?from=&to=` | Own attendance history |
+| GET / POST / PUT / DELETE | `/api/users[/{id}]` | Manage accounts (admin) |
+| POST | `/api/users/{id}/reset-password` | Reset a user's password (admin) |
+| GET | `/api/audit?username=&action=&page=` | Audit log (admin) |
 | GET | `/api/employees?activeOnly=false` | List employees |
 | GET | `/api/employees/departments` | Department names |
 | POST / PUT / DELETE | `/api/employees[/{id}]` | Create / update / delete employee |

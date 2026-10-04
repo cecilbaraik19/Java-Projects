@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, fmtDate, fmtTime, toIso, todayIso } from '../api.js';
 import { useToast } from '../components/Toast.jsx';
+import { useAuth } from '../auth.jsx';
 import Modal from '../components/Modal.jsx';
 import Person from '../components/Person.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -102,6 +103,7 @@ function HistoryModal({ employee, onClose }) {
 
 export default function Employees() {
   const toast = useToast();
+  const isAdmin = useAuth().user.role === 'ADMIN';
   const [list, setList] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [q, setQ] = useState('');
@@ -131,7 +133,7 @@ export default function Employees() {
     <>
       <div className="page-head">
         <div><h1>Employees</h1><p>{list.filter((e) => e.active).length} active of {list.length}</p></div>
-        <button className="btn btn-primary" onClick={() => setEditing({})}><IconPlus />Add employee</button>
+        {isAdmin && <button className="btn btn-primary" onClick={() => setEditing({})}><IconPlus />Add employee</button>}
       </div>
 
       <section className="card">
@@ -156,8 +158,10 @@ export default function Employees() {
                   <td>{e.active ? <span className="badge PRESENT">Active</span> : <span className="badge inactive">Inactive</span>}</td>
                   <td className="num">
                     <button className="icon-btn" title="Attendance history" aria-label="Attendance history" onClick={() => setHistory(e)}><IconCalendar /></button>
-                    <button className="icon-btn" title="Edit" aria-label="Edit" onClick={() => setEditing(e)}><IconEdit /></button>
-                    <button className="icon-btn" title="Delete" aria-label="Delete" onClick={() => setDeleting(e)}><IconTrash /></button>
+                    {isAdmin && <>
+                      <button className="icon-btn" title="Edit" aria-label="Edit" onClick={() => setEditing(e)}><IconEdit /></button>
+                      <button className="icon-btn" title="Delete" aria-label="Delete" onClick={() => setDeleting(e)}><IconTrash /></button>
+                    </>}
                   </td>
                 </tr>
               ))}

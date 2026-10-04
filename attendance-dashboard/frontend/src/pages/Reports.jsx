@@ -61,7 +61,9 @@ export default function Reports() {
     <>
       <div className="page-head">
         <div><h1>Reports</h1><p>Per-employee attendance summary</p></div>
-        <a className="btn" href={api.summaryCsvUrl(from, to)} download><IconDownload />Export CSV</a>
+        <button className="btn" onClick={() => api.downloadSummaryCsv(from, to).catch((e) => toast(e.message, 'error'))}>
+          <IconDownload />Export CSV
+        </button>
       </div>
 
       <div className="stats">

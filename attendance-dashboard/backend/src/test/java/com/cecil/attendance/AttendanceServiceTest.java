@@ -100,7 +100,7 @@ class AttendanceServiceTest {
         attendance.checkIn(alice.getId());
         attendance.saveManual(new ManualEntryRequest(carol.getId(), DAY, AttendanceStatus.ON_LEAVE, null, null, "Sick"));
 
-        DashboardStats s = reports.stats(DAY);
+        DashboardStats s = reports.stats(DAY, null);
         assertThat(s.totalEmployees()).isEqualTo(3);
         assertThat(s.present()).isEqualTo(1);
         assertThat(s.onLeave()).isEqualTo(1);
@@ -113,7 +113,7 @@ class AttendanceServiceTest {
     void dailyBoardShowsNotMarkedRows() {
         NOW.set(LocalTime.of(9, 0));
         attendance.checkIn(bob.getId());
-        List<AttendanceView> board = attendance.dailyBoard(DAY);
+        List<AttendanceView> board = attendance.dailyBoard(DAY, null);
         assertThat(board).extracting(AttendanceView::status).containsExactly("NOT_MARKED", "PRESENT");
     }
 
@@ -137,7 +137,7 @@ class AttendanceServiceTest {
         // Mon 28 Sep .. Mon 5 Oct = 6 working days
         attendance.saveManual(new ManualEntryRequest(alice.getId(), DAY.minusDays(7), AttendanceStatus.PRESENT,
                 LocalTime.of(9, 0), LocalTime.of(18, 0), null));
-        EmployeeSummary s = reports.summary(DAY.minusDays(7), DAY).stream()
+        EmployeeSummary s = reports.summary(DAY.minusDays(7), DAY, null).stream()
                 .filter(x -> x.employeeId().equals(alice.getId())).findFirst().orElseThrow();
         assertThat(s.workingDays()).isEqualTo(6);
         assertThat(s.present()).isEqualTo(1);
@@ -148,6 +148,6 @@ class AttendanceServiceTest {
     @Test
     void csvEscapesFormulaInjection() {
         employeeService.create(new EmployeeRequest("e9", "=HYPERLINK(\"x\")", "h@x.com", "HR", null, null, true));
-        assertThat(reports.summaryCsv(DAY, DAY)).contains("\"'=HYPERLINK(\"\"x\"\")\"");
+        assertThat(reports.summaryCsv(DAY, DAY, null)).contains("\"'=HYPERLINK(\"\"x\"\")\"");
     }
 }
