@@ -1,0 +1,16 @@
+# build output
+backend/target/
+frontend/node_modules/
+frontend/dist/
+backend/src/main/resources/static/
+# local database AND the master key: never commit these
+backend/data/
+data/
+*.key
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Maven downloaded by mvnw.cmd
+backend/.mvn/
