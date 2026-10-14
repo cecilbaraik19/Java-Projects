@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Code Review Assistant</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="side" id="side">
+      <div class="brand">
+        <div class="brand-mark">&lt;/&gt;</div>
+        <div class="lbl"><b>Code Review</b><span>AI assistant</span></div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#/review" data-nav="review" title="Review code"><span class="ico">&#9998;</span><span class="lbl">Review code</span></a>
+        <a href="#/report" data-nav="report" title="Full report"><span class="ico">&#9776;</span><span class="lbl">Full report</span></a>
+        <a href="#/rules" data-nav="rules" title="Rules"><span class="ico">&#10003;</span><span class="lbl">Rules</span> <span class="count lbl" id="ruleCount"></span></a>
+        <a href="#/history" data-nav="history" title="History"><span class="ico">&#8635;</span><span class="lbl">History</span></a>
+        <a href="#/settings" data-nav="settings" title="Settings"><span class="ico">&#9881;</span><span class="lbl">Settings</span></a>
+      </nav>
+      <div class="side-foot" id="aiMode">Connecting...</div>
+      <button class="ghost slim-btn" id="slimBtn" aria-label="Collapse menu">&laquo;</button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="ghost menu-btn" id="menuBtn" aria-label="Open menu">Menu</button>
+        <div class="score-chip hidden" id="scoreChip"></div>
+        <div class="spacer"></div>
+        <button class="ghost" id="themeBtn" aria-label="Switch theme">Dark mode</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- dialog used for auto-fix preview, open path, new file -->
+  <div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head"><h2 id="modalTitle"></h2><button class="ghost" id="modalClose" aria-label="Close">&times;</button></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot" id="modalFoot"></div>
+    </div>
+  </div>
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <input type="file" id="fileInput" multiple accept=".java,.js,.ts,.py,.jsx,.tsx,.mjs" class="hidden">
+  <input type="file" id="folderInput" webkitdirectory multiple class="hidden">
+
+  <script src="app.js"></script>
+</body>
+</html>

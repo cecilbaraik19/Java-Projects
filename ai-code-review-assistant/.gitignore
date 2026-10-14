@@ -1,0 +1,10 @@
+out/
+target/
+data/
+review-output/
+*.class
+*.log
+*.bak
+.idea/
+*.iml
+.vscode/
