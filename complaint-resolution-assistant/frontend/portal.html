@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer Help Centre</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="portal">
+    <header class="portal-head">
+      <div class="brand">
+        <div class="brand-mark">CR</div>
+        <div><b>Customer Help Centre</b><span>Tell us what went wrong</span></div>
+      </div>
+      <div class="row"><button class="ghost" id="themeBtn">Dark mode</button><a href="/" class="small">Staff sign in</a></div>
+    </header>
+
+    <div class="portal-grid">
+      <section class="panel panel-pad" id="formCard">
+        <h1 style="margin-bottom:.4rem">Raise a complaint</h1>
+        <p class="muted">We read every complaint. You will get a reference number to track it.</p>
+        <form id="cForm" novalidate style="margin-top:1rem">
+          <div class="grid-2">
+            <div class="field"><label for="cName">Your name</label><input id="cName" name="customerName" required maxlength="80" autocomplete="name"></div>
+            <div class="field"><label for="cEmail">Your email</label><input id="cEmail" name="customerEmail" type="email" required maxlength="120" autocomplete="email"></div>
+          </div>
+          <div class="field"><label for="cOrder">Order number, if you have one</label><input id="cOrder" name="orderId" maxlength="40"></div>
+          <div class="field"><label for="cSubject">What is it about?</label><input id="cSubject" name="subject" required maxlength="150" placeholder="My parcel has not arrived"></div>
+          <div class="field"><label for="cDesc">Tell us what happened</label><textarea id="cDesc" name="description" required maxlength="5000" rows="7"></textarea></div>
+          <p id="cErr" class="small" style="color:var(--bad)"></p>
+          <button class="primary" type="submit">Send complaint</button>
+        </form>
+        <div id="cDone" class="hidden" aria-live="polite"></div>
+      </section>
+
+      <section class="panel panel-pad">
+        <h2 style="margin-bottom:.4rem">Track a complaint</h2>
+        <p class="muted small">Enter your reference number and the email you used.</p>
+        <form id="tForm" style="margin-top:.8rem">
+          <div class="field"><label for="tId">Reference number</label><input id="tId" name="id" required placeholder="CMP-1001"></div>
+          <div class="field"><label for="tEmail">Email</label><input id="tEmail" name="email" type="email" required></div>
+          <p id="tErr" class="small" style="color:var(--bad)"></p>
+          <button type="submit">Check status</button>
+        </form>
+        <div id="tResult" aria-live="polite" style="margin-top:1rem"></div>
+      </section>
+    </div>
+  </div>
+  <script src="/static/portal.js"></script>
+</body>
+</html>

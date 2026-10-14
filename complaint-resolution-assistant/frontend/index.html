@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Complaint Resolution Assistant</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <!-- Login screen -->
+  <div id="login" class="login-wrap hidden">
+    <section class="login-art">
+      <div class="brand">
+        <div class="brand-mark">CR</div>
+        <div><b>Complaint Resolution Assistant</b><span>AI support console</span></div>
+      </div>
+      <div>
+        <h1>Read every complaint the way your best agent would.</h1>
+        <p style="max-width:44ch;opacity:.9">The assistant reads each complaint, works out what it is about and how upset the customer is,
+          and suggests the fix that worked last time.</p>
+      </div>
+      <div class="sample">
+        "I was <mark>charged twice</mark> for the same order and nobody replies. <mark>Refund</mark> it today!"
+        <div class="small" style="margin-top:.6rem;opacity:.85">Topic: billing. Mood: very upset. Priority: high. Suggested fix: refund a duplicate charge.</div>
+      </div>
+    </section>
+    <section class="login-form">
+      <form id="loginForm" autocomplete="on">
+        <h2 style="margin-bottom:1.2rem">Sign in to the console</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="small" style="color:var(--bad)"></p>
+        <button class="primary" type="submit" style="width:100%;justify-content:center">Sign in</button>
+        <div class="demo-accounts">
+          Demo accounts: <b>admin</b> / admin123 (admin), <b>priya</b> / agent123 (agent).<br>
+          Customers can file and track complaints on the <a href="/portal">customer portal</a>.
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" class="shell hidden">
+    <aside class="side" id="side">
+      <div class="brand">
+        <div class="brand-mark">CR</div>
+        <div><b>Complaint Resolution</b><span>AI assistant</span></div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="#/complaints" data-nav="complaints">Complaints <span class="count hidden" id="navOverdue"></span></a>
+        <a href="#/new" data-nav="new">Log a complaint</a>
+        <a href="#/kb" data-nav="kb">Knowledge base</a>
+        <a href="#/analytics" data-nav="analytics">Analytics</a>
+        <a href="#/team" data-nav="team" id="navTeam">Team</a>
+      </nav>
+      <div class="side-foot" id="aiMode"></div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="ghost menu-btn" id="menuBtn" aria-label="Open menu">Menu</button>
+        <input class="search" id="globalSearch" type="search" placeholder="Search by name, email, order or reference">
+        <div class="spacer"></div>
+        <button class="ghost" id="themeBtn" aria-label="Switch theme">Dark mode</button>
+        <span class="who" id="who"></span>
+        <button id="logoutBtn">Sign out</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
