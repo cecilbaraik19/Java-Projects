@@ -1,0 +1,39 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: doc-qa-system
+  datasource:
+    # Data is saved in the "data" folder next to where you run the app
+    url: jdbc:h2:file:./data/docqa;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+docqa:
+  chunk:
+    size: 900        # characters per chunk
+    overlap: 150     # characters shared between neighbouring chunks
+  retrieval:
+    top-k: 5         # how many chunks are used to answer
+  ai:
+    # Put your Claude API key in the ANTHROPIC_API_KEY environment variable.
+    # Without a key the app still works in "offline" mode (extractive answers).
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${DOCQA_MODEL:claude-sonnet-5-5}
+    base-url: https://api.anthropic.com
+    max-tokens: 1024
+    timeout-seconds: 60
+  cors:
+    allowed-origins: http://localhost:5173

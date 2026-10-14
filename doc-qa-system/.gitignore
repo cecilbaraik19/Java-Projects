@@ -1,0 +1,18 @@
+# Java / Maven
+backend/target/
+data/
+*.mv.db
+*.trace.db
+*.class
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Secrets
+.env

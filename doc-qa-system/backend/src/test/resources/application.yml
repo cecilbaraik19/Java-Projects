@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+docqa:
+  chunk:
+    size: 400
+    overlap: 60
+  retrieval:
+    top-k: 4
+  ai:
+    api-key: ""          # tests always use the offline answerer
+    model: test-model
+    base-url: http://localhost:1
+    max-tokens: 256
+    timeout-seconds: 5
+  cors:
+    allowed-origins: http://localhost:5173
