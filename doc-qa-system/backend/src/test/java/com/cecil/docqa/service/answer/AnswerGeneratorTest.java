@@ -37,6 +37,15 @@ class AnswerGeneratorTest {
     }
 
     @Test
+    void offlineSummaryListsMainPointsWithCitations() {
+        java.util.Map<String, List<Context>> byDoc = new java.util.LinkedHashMap<>();
+        byDoc.put("policy.pdf", contexts);
+        AnswerGenerator.Answer a = offline.summarize(byDoc, 3);
+        assertThat(a.text()).startsWith("Here are the main points:");
+        assertThat(a.text()).contains("\u2022").contains("Refunds are given within 30 days").containsPattern("\\[\\d]");
+    }
+
+    @Test
     void claudeRequestContainsNumberedExcerptsAndQuestion() {
         ClaudeAnswerGenerator claude = new ClaudeAnswerGenerator(props("key-123"), new ObjectMapper());
         ObjectNode req = claude.buildRequest("What is the refund window?", contexts);

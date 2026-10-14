@@ -2,7 +2,9 @@ package com.cecil.docqa.service;
 
 import com.cecil.docqa.config.DocQaProperties;
 import com.cecil.docqa.model.Document;
+import com.cecil.docqa.model.DocumentChunk;
 import com.cecil.docqa.model.QaRecord;
+import com.cecil.docqa.repository.ChunkRepository;
 import com.cecil.docqa.repository.DocumentRepository;
 import com.cecil.docqa.repository.QaRecordRepository;
 import com.cecil.docqa.service.answer.AnswerGenerator.Answer;
@@ -18,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,17 +39,19 @@ public class QaService {
 
     private final SearchIndex index;
     private final DocumentRepository documents;
+    private final ChunkRepository chunks;
     private final QaRecordRepository history;
     private final ClaudeAnswerGenerator claude;
     private final ExtractiveAnswerGenerator offline;
     private final ObjectMapper mapper;
     private final int topK;
 
-    public QaService(SearchIndex index, DocumentRepository documents, QaRecordRepository history,
-                     ClaudeAnswerGenerator claude, ExtractiveAnswerGenerator offline,
+    public QaService(SearchIndex index, DocumentRepository documents, ChunkRepository chunks,
+                     QaRecordRepository history, ClaudeAnswerGenerator claude, ExtractiveAnswerGenerator offline,
                      ObjectMapper mapper, DocQaProperties props) {
         this.index = index;
         this.documents = documents;
+        this.chunks = chunks;
         this.history = history;
         this.claude = claude;
         this.offline = offline;
@@ -59,6 +65,10 @@ public class QaService {
 
         if (documents.count() == 0) {
             throw new IllegalStateException("Upload a document first, then ask your question.");
+        }
+
+        if (isOverviewQuestion(q)) {
+            return overview(q, documentIds, start);
         }
 
         List<SearchIndex.Hit> hits = index.search(q, topK, documentIds);
@@ -97,6 +107,90 @@ public class QaService {
         QaRecord saved = history.save(new QaRecord(q, answerText, mode, confidence, toJson(sources), took));
         return new AnswerDto(saved.getId(), q, answerText, mode, confidence, sources, took, saved.getAskedAt(), note);
     }
+
+    /* ---------------- summary mode ---------------- */
+
+    /** Words that mean "give me the big picture", e.g. "tell me everything", "summarize". */
+    private static final Set<String> OVERVIEW_WORDS = new HashSet<>(Tokenizer.tokens(
+            "everything summary summarize summarise summarized overview main point points key topic topics "
+                    + "gist brief briefly short whole entire full content contents contain contains cover covers "
+                    + "outline highlights important idea ideas abstract notes note file pdf"));
+
+    /** True when every meaningful word of the question is an "overview" word (or there are none). */
+    static boolean isOverviewQuestion(String question) {
+        List<String> tokens = Tokenizer.tokens(question);
+        return OVERVIEW_WORDS.containsAll(tokens);
+    }
+
+    private static final int MAX_OVERVIEW_DOCS = 3;
+    private static final int CLAUDE_CHUNKS_PER_DOC = 6;
+    private static final int SENTENCES_PER_DOC = 5;
+    private static final Pattern CITATION = Pattern.compile("\\[(\\d+)]");
+
+    private AnswerDto overview(String q, List<Long> documentIds, long start) {
+        List<Document> docs;
+        String note = null;
+        if (documentIds != null && !documentIds.isEmpty()) {
+            docs = documents.findAllById(documentIds);
+        } else {
+            docs = documents.findAllByOrderByUploadedAtDesc();
+            if (docs.size() > MAX_OVERVIEW_DOCS) {
+                note = "This is a summary of your " + MAX_OVERVIEW_DOCS
+                        + " newest documents. Tick a document on the left to summarize only that one.";
+            }
+        }
+        docs = docs.stream().limit(MAX_OVERVIEW_DOCS).toList();
+
+        // Every chunk of each document, numbered so the answer can cite them
+        Map<String, List<Context>> byDoc = new LinkedHashMap<>();
+        Map<Integer, SourceDto> allSources = new LinkedHashMap<>();
+        int n = 1;
+        for (Document d : docs) {
+            List<Context> list = new ArrayList<>();
+            for (DocumentChunk c : chunks.findByDocumentIdOrderByChunkIndex(d.getId())) {
+                list.add(new Context(n, d.getFileName(), c.getPageNumber(), c.getText()));
+                allSources.put(n, new SourceDto(n, d.getId(), d.getFileName(), c.getPageNumber(), c.getText(), 0));
+                n++;
+            }
+            byDoc.put(d.getFileName(), list);
+        }
+
+        Answer answer = null;
+        if (claude.isEnabled()) {
+            try {
+                List<Context> sample = new ArrayList<>();
+                byDoc.values().forEach(list -> sample.addAll(spread(list, CLAUDE_CHUNKS_PER_DOC)));
+                String prompt = "Give a clear overview of these documents: what each one is about and its "
+                        + "key points as a short list. The user asked: \"" + q + "\"";
+                answer = claude.generate(prompt, sample);
+            } catch (Exception e) {
+                log.warn("Claude summary failed, using offline summary instead: {}", e.getMessage());
+                note = "Claude could not be reached, so this summary was made offline.";
+            }
+        }
+        if (answer == null) answer = offline.summarize(byDoc, docs.size() == 1 ? 8 : SENTENCES_PER_DOC);
+
+        // Only list the chunks the answer actually cites
+        Set<Integer> cited = new TreeSet<>();
+        Matcher m = CITATION.matcher(answer.text());
+        while (m.find()) cited.add(Integer.parseInt(m.group(1)));
+        List<SourceDto> sources = cited.stream().map(allSources::get).filter(Objects::nonNull).toList();
+
+        long took = System.currentTimeMillis() - start;
+        QaRecord saved = history.save(new QaRecord(q, answer.text(), answer.mode(), "summary", toJson(sources), took));
+        return new AnswerDto(saved.getId(), q, answer.text(), answer.mode(), "summary", sources, took,
+                saved.getAskedAt(), note);
+    }
+
+    /** Picks up to "count" chunks spread evenly through the document (start, middle, end). */
+    static <T> List<T> spread(List<T> list, int count) {
+        if (list.size() <= count) return list;
+        List<T> out = new ArrayList<>();
+        for (int i = 0; i < count; i++) out.add(list.get((int) Math.round(i * (list.size() - 1) / (double) (count - 1))));
+        return out;
+    }
+
+    /* ---------------- normal questions ---------------- */
 
     private Answer answer(String question, List<Context> contexts) {
         if (claude.isEnabled()) {

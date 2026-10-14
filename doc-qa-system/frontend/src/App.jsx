@@ -4,6 +4,7 @@ import { api } from './api.js'
 const ACCEPT = '.pdf,.docx,.txt,.md,.csv,.json,.html'
 
 const SAMPLE_QUESTIONS = [
+  'Tell me everything',
   'What is this document about?',
   'What are the main rules or requirements?',
   'Are there any deadlines or dates?',
@@ -63,6 +64,11 @@ const Icon = {
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  plus: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
     </svg>
   ),
   send: (
@@ -137,7 +143,11 @@ function AnswerCard({ item }) {
             )}
             <div className="meta">
               <span className={`chip conf-${item.confidence}`}>
-                {item.confidence === 'none' ? 'no match' : `${item.confidence} match`}
+                {item.confidence === 'none'
+                  ? 'no match'
+                  : item.confidence === 'summary'
+                    ? 'summary'
+                    : `${item.confidence} match`}
               </span>
               <span className="chip">{item.mode === 'claude' ? 'Claude AI' : 'Offline'}</span>
               <span className="chip mono">{item.durationMs} ms</span>
@@ -236,9 +246,16 @@ export default function App() {
 
   useEffect(() => {
     refresh()
+    // Only show questions asked after the last "New chat"
+    let after = 0
+    try {
+      after = Number(localStorage.getItem('docqa-chat-after')) || 0
+    } catch {
+      /* storage blocked */
+    }
     api
       .history()
-      .then((h) => setThread([...h].reverse()))
+      .then((h) => setThread([...h].reverse().filter((x) => x.id > after)))
       .catch(() => {})
   }, [])
 
@@ -300,6 +317,18 @@ export default function App() {
     }
   }
 
+  // Start a fresh chat: clears the screen, keeps documents and saved history
+  const newChat = () => {
+    const lastId = Math.max(0, ...thread.map((x) => x.id || 0))
+    try {
+      localStorage.setItem('docqa-chat-after', String(lastId))
+    } catch {
+      /* ignore */
+    }
+    setThread([])
+    setQuestion('')
+  }
+
   const clearHistory = async () => {
     if (!window.confirm('Clear all questions and answers?')) return
     await api.clearHistory().catch(() => {})
@@ -308,7 +337,9 @@ export default function App() {
 
   const scopeLabel =
     selected.size === 0
-      ? `all ${docs.length} document${docs.length === 1 ? '' : 's'}`
+      ? docs.length === 0
+        ? 'no documents yet'
+        : `all ${docs.length} document${docs.length === 1 ? '' : 's'}`
       : `${selected.size} selected document${selected.size === 1 ? '' : 's'}`
 
   return (
@@ -412,10 +443,13 @@ export default function App() {
           </div>
           <div className="topbar-actions">
             {thread.length > 0 && (
-              <button className="link" onClick={clearHistory}>
+              <button className="link muted-link" onClick={clearHistory}>
                 Clear history
               </button>
             )}
+            <button className="new-chat" onClick={newChat} disabled={thread.length === 0 || asking}>
+              {Icon.plus} New chat
+            </button>
             <button className="icon-btn" onClick={toggleTheme} aria-label="Switch theme" title="Switch light / dark">
               {theme === 'dark' ? Icon.sun : Icon.moon}
             </button>

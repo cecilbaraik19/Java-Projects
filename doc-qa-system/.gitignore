@@ -1,5 +1,5 @@
 # Java / Maven
-backend/target/
+target/
 data/
 *.mv.db
 *.trace.db

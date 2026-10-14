@@ -89,6 +89,15 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void tellMeEverythingGivesASummary() throws Exception {
+        upload("handbook.txt", HANDBOOK);
+        JsonNode answer = ask("Tell me everything");
+        assertThat(answer.get("confidence").asText()).isEqualTo("summary");
+        assertThat(answer.get("answer").asText()).startsWith("Here are the main points:").contains("75 percent");
+        assertThat(answer.get("sources").size()).isGreaterThan(0);
+    }
+
+    @Test
     void unknownTopicSaysNotFound() throws Exception {
         upload("handbook.txt", HANDBOOK);
         JsonNode answer = ask("Who is the cricket captain?");

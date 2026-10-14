@@ -13,5 +13,13 @@ export default defineConfig({
     // so the Spring Boot app serves everything on http://localhost:8090
     outDir: '../backend/src/main/resources/static',
     emptyOutDir: true,
+    // fixed file names, so a new build replaces the old files
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/app.js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]',
+      },
+    },
   },
 })
