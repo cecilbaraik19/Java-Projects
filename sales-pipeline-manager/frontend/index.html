@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales Pipeline Manager</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <!-- Login screen -->
+  <div id="login" class="login-wrap hidden">
+    <section class="login-art">
+      <div class="brand">
+        <div class="brand-mark">SP</div>
+        <div><b>Sales Pipeline Manager</b><span>Track every potential sale</span></div>
+      </div>
+      <div>
+        <h1>Know which deals will close, and which need you today.</h1>
+        <p class="lede">Move deals from lead to won on one board. The app scores each deal's health,
+          reminds you of next steps, and turns your pipeline into a monthly forecast.</p>
+      </div>
+      <ol class="login-stages" aria-label="Pipeline stages">
+        <li>Lead</li><li>Qualified</li><li>Proposal</li><li>Negotiation</li><li class="won">Won</li>
+      </ol>
+    </section>
+    <section class="login-form">
+      <form id="loginForm" autocomplete="on">
+        <h2>Sign in</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="small err-text" role="alert"></p>
+        <button class="primary wide" type="submit">Sign in</button>
+        <div class="demo-accounts">
+          <b>Demo accounts</b>
+          <button type="button" class="link" data-demo="admin:admin123">admin / admin123 <span class="role">(admin)</span></button>
+          <button type="button" class="link" data-demo="neha:manager123">neha / manager123 <span class="role">(manager)</span></button>
+          <button type="button" class="link" data-demo="arjun:sales123">arjun / sales123 <span class="role">(sales rep)</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" class="shell hidden">
+    <aside class="side" id="side">
+      <div class="brand">
+        <div class="brand-mark">SP</div>
+        <div><b>Sales Pipeline</b><span>Manager</span></div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="#/board" data-nav="board">Pipeline board</a>
+        <a href="#/deals" data-nav="deals">Deals</a>
+        <a href="#/activities" data-nav="activities">Activities <span class="count hidden" id="navOverdue"></span></a>
+        <a href="#/accounts" data-nav="accounts">Accounts</a>
+        <a href="#/reports" data-nav="reports">Forecast &amp; reports</a>
+        <a href="#/team" data-nav="team" id="navTeam">Team</a>
+      </nav>
+      <div class="side-foot">
+        <button class="primary wide" id="quickDeal">+ New deal</button>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="ghost menu-btn" id="menuBtn" aria-label="Open menu">Menu</button>
+        <form id="searchForm" class="search-form" role="search">
+          <input class="search" id="globalSearch" type="search" placeholder="Search deals and companies" aria-label="Search deals and companies">
+        </form>
+        <div class="spacer"></div>
+        <button class="ghost" id="themeBtn" type="button">Dark mode</button>
+        <button class="ghost who" id="who" type="button" title="Change password"></button>
+        <button id="logoutBtn" type="button">Sign out</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Modal dialog used by all forms -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="ghost" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="small err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
