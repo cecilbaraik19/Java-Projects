@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edge Monitor</title>
+  <meta name="description" content="Edge Computing Monitoring System - process IoT data at the edge">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- ============ Sign in ============ -->
+  <div id="login" class="login hidden">
+    <section class="login-panel login-diagram" aria-label="About this system">
+      <div class="plate-brand">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z M8 3v4 M16 3v4 M8 17v4 M16 17v4 M2 10h2 M2 14h2 M20 10h2 M20 14h2"/></svg></span>
+        <div><b>EDGE//MONITOR</b><span>Edge Computing Monitoring System</span></div>
+      </div>
+      <h1>Decide next to the machine.<br>Send the cloud only what matters.</h1>
+      <p class="lede">IoT sensors talk to a small computer on site, the <b>edge node</b>. It cleans, sums up and checks
+        every reading locally, acts in milliseconds, and sends a fraction of the data to the cloud.</p>
+      <!-- simple schematic: sensors -> edge node -> cloud -->
+      <svg class="schematic" viewBox="0 0 420 170" role="img" aria-label="Sensors send readings to an edge node, which sends a small summary to the cloud">
+        <g class="sch-sensors">
+          <circle cx="30" cy="30" r="9"/><circle cx="30" cy="85" r="9"/><circle cx="30" cy="140" r="9"/>
+          <text x="30" y="34">T</text><text x="30" y="89">V</text><text x="30" y="144">P</text>
+        </g>
+        <g class="sch-wires">
+          <path d="M40 30 C 100 30, 100 85, 150 85"/><path d="M40 85 H150"/><path d="M40 140 C 100 140, 100 85, 150 85"/>
+        </g>
+        <g class="sch-dots"><circle cx="70" cy="37" r="3"/><circle cx="95" cy="85" r="3"/><circle cx="72" cy="133" r="3"/><circle cx="125" cy="85" r="3"/></g>
+        <rect class="sch-node" x="150" y="55" width="130" height="60" rx="3"/>
+        <text class="sch-label" x="215" y="80">EDGE NODE</text>
+        <text class="sch-sub" x="215" y="98">filter·sum·detect</text>
+        <path class="sch-up" d="M280 85 H336"/>
+        <circle class="sch-dot2" cx="306" cy="85" r="3"/>
+        <path class="sch-cloud" d="M340 100 h55 a16 16 0 0 0 -4 -31 a22 22 0 0 0 -42 -4 a14 14 0 0 0 -9 35 z"/>
+        <text class="sch-sub" x="368" y="122">cloud</text>
+        <text class="sch-big" x="308" y="72">−90%</text>
+      </svg>
+      <ul class="login-points" aria-label="Main features">
+        <li><b>4 modes</b> raw · filter · aggregate · smart</li>
+        <li><b>Rules</b> checked on the node, no round trip</li>
+        <li><b>Store &amp; forward</b> when the internet drops</li>
+        <li><b>Fault lab</b> to break things on purpose</li>
+      </ul>
+    </section>
+    <section class="login-panel login-form-wrap">
+      <div class="login-tools"><button class="btn ghost theme-btn" type="button" data-theme-toggle>Dark mode</button></div>
+      <form id="loginForm" class="login-form" autocomplete="on">
+        <p class="eyebrow">Operator sign in</p>
+        <h2>Control room</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="err-text small" role="alert"></p>
+        <button class="btn primary wide" type="submit">Sign in</button>
+        <div class="demo">
+          <b>Demo accounts (click to fill)</b>
+          <button type="button" class="link" data-demo="admin:admin123">admin / admin123 <span>admin</span></button>
+          <button type="button" class="link" data-demo="priya:engineer123">priya / engineer123 <span>edge engineer</span></button>
+          <button type="button" class="link" data-demo="arjun:viewer123">arjun / viewer123 <span>viewer</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ============ App ============ -->
+  <div id="app" class="shell hidden">
+    <aside class="rail" id="rail">
+      <div class="plate-brand small">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z M8 3v4 M16 3v4 M8 17v4 M16 17v4 M2 10h2 M2 14h2 M20 10h2 M20 14h2"/></svg></span>
+        <div><b>EDGE//MONITOR</b><span>IoT edge control room</span></div>
+      </div>
+      <nav class="nav" id="nav" aria-label="Main">
+        <p class="nav-group">Monitor</p>
+        <a href="#/overview" data-nav="overview"><i>01</i>Overview</a>
+        <a href="#/nodes" data-nav="nodes"><i>02</i>Edge nodes <span class="pill hidden" id="navNodes"></span></a>
+        <a href="#/sensors" data-nav="sensors"><i>03</i>Sensors</a>
+        <a href="#/alerts" data-nav="alerts"><i>04</i>Alerts <span class="pill bad hidden" id="navAlerts"></span></a>
+        <p class="nav-group">Edge processing</p>
+        <a href="#/pipeline" data-nav="pipeline"><i>05</i>Pipeline &amp; modes</a>
+        <a href="#/rules" data-nav="rules"><i>06</i>Rules</a>
+        <a href="#/lab" data-nav="lab"><i>07</i>Fault lab <span class="pill warn hidden" id="navFaults"></span></a>
+        <p class="nav-group">Admin</p>
+        <a href="#/reports" data-nav="reports"><i>08</i>Reports</a>
+        <a href="#/settings" data-nav="settings"><i>09</i>Settings</a>
+        <a href="#/team" data-nav="team" id="navTeam"><i>10</i>Team</a>
+      </nav>
+      <div class="rail-foot">
+        <div class="sim-state" id="simState"><span class="led"></span><span>Simulator</span></div>
+        <p class="tiny">Sample data. All sites, nodes and people are made up.</p>
+      </div>
+    </aside>
+    <div class="rail-shade hidden" id="railShade"></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="btn ghost menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-controls="rail">Menu</button>
+        <div class="ticker" id="ticker" aria-live="off"></div>
+        <div class="spacer"></div>
+        <span class="clock mono" id="clock"></span>
+        <button class="btn ghost theme-btn" type="button" data-theme-toggle>Dark mode</button>
+        <button class="btn ghost who" id="who" type="button" title="Change password"></button>
+        <button class="btn" id="logoutBtn" type="button">Sign out</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="btn ghost" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text small" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
