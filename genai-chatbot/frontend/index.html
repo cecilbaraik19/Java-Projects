@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GenAI Chatbot</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- Login screen -->
+  <div id="login" class="login-wrap hidden">
+    <section class="login-art">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">N<i>.</i></span>
+        <span class="brand-text"><b>GenAI Chatbot</b><span>Java backend · Generative AI</span></span>
+      </div>
+      <div>
+        <p class="kicker">Vol. 1 · Generative AI, served by Java</p>
+        <h1>Ask anything.<br><em>Get it answered</em> by real AI models.</h1>
+        <p class="lede">Connect Google Gemini, Groq, OpenAI, Claude or a local Ollama model. Answers stream in word by word,
+          can cite your own notes, and personal details are hidden before anything leaves the server.</p>
+      </div>
+      <ul class="login-points" aria-label="Main features">
+        <li><b>Streaming</b> answers</li>
+        <li><b>5</b> AI services</li>
+        <li><b>RAG</b> knowledge base</li>
+        <li><b>Safety</b> filters</li>
+        <li>Works <b>offline</b> too</li>
+      </ul>
+    </section>
+    <section class="login-form">
+      <div class="login-tools"><button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button></div>
+      <form id="loginForm" autocomplete="on">
+        <h2>Sign in</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="small err-text" role="alert"></p>
+        <button class="primary wide" type="submit">Sign in</button>
+        <div class="demo-accounts">
+          <b>Demo accounts (click to fill)</b>
+          <button type="button" class="link" data-demo="admin:admin123">admin / admin123 <span class="role">(admin)</span></button>
+          <button type="button" class="link" data-demo="priya:trainer123">priya / trainer123 <span class="role">(AI trainer)</span></button>
+          <button type="button" class="link" data-demo="rahul:member123">rahul / member123 <span class="role">(member)</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Main app: masthead on top (no sidebar) -->
+  <div id="app" class="shell hidden">
+    <header class="masthead">
+      <div class="mast-row">
+        <a class="brand" href="#/chat" aria-label="GenAI Chatbot home">
+          <span class="brand-mark" aria-hidden="true">N<i>.</i></span>
+          <span class="brand-text"><b>GenAI Chatbot</b><span id="botName">Nova</span></span>
+        </a>
+        <button class="ghost menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="side">Menu</button>
+        <nav class="nav side" id="side" aria-label="Main">
+          <div id="nav">
+            <a href="#/chat" data-nav="chat">Chat</a>
+            <a href="#/assistants" data-nav="assistants">Assistants</a>
+            <a href="#/knowledge" data-nav="knowledge">Knowledge</a>
+            <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+            <a href="#/models" data-nav="models" class="admin-only">AI models</a>
+            <a href="#/settings" data-nav="settings" class="admin-only">Settings</a>
+            <a href="#/team" data-nav="team" class="admin-only">Team</a>
+          </div>
+        </nav>
+        <div class="spacer"></div>
+        <form id="searchForm" class="search-form" role="search">
+          <input class="search" id="globalSearch" type="search" placeholder="Search chats…" aria-label="Search your chats">
+        </form>
+        <span class="model-chip" id="modelChip" title="Default AI model"></span>
+        <button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button>
+        <button class="ghost who" id="who" type="button" title="Change password"></button>
+        <button id="logoutBtn" class="ghost" type="button">Sign out</button>
+        <button class="primary new-chat-btn" id="newChatBtn" type="button">+ New chat</button>
+      </div>
+    </header>
+    <div class="side-shade hidden" id="sideShade"></div>
+    <main class="page" id="view" tabindex="-1"></main>
+    <footer class="colophon">Answers are written by AI and can be wrong. Check important facts.</footer>
+  </div>
+
+  <!-- Modal dialog used by all forms -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="ghost" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="small err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
