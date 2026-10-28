@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Energy Saver</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- Login screen -->
+  <div id="login" class="login-wrap hidden">
+    <section class="login-art">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <div><b>Smart Energy Saver</b><span>Use less power, pay less</span></div>
+      </div>
+      <div>
+        <h1>See where every unit goes, and cut the waste.</h1>
+        <p class="lede">Track each appliance, switch things off from one screen, avoid costly peak hours,
+          and get savings tips with the rupees and CO<sub>2</sub> they save every month.</p>
+      </div>
+      <ul class="login-points" aria-label="Main features">
+        <li><b>Live</b> on / off control</li>
+        <li><b>Bill</b> forecast with slab rates</li>
+        <li><b>Tips</b> with payback time</li>
+        <li><b>Score</b> out of 100</li>
+      </ul>
+    </section>
+    <section class="login-form">
+      <div class="login-tools"><button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button></div>
+      <form id="loginForm" autocomplete="on">
+        <h2>Sign in</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="small err-text" role="alert"></p>
+        <button class="primary wide" type="submit">Sign in</button>
+        <div class="demo-accounts">
+          <b>Demo accounts (click to fill)</b>
+          <button type="button" class="link" data-demo="admin:admin123">admin / admin123 <span class="role">(admin)</span></button>
+          <button type="button" class="link" data-demo="meera:manager123">meera / manager123 <span class="role">(energy manager)</span></button>
+          <button type="button" class="link" data-demo="rohan:member123">rohan / member123 <span class="role">(member)</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" class="shell hidden">
+    <aside class="side" id="side">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <div><b>Smart Energy</b><span id="homeName">Saver</span></div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="#/live" data-nav="live">Live control <span class="count live hidden" id="navOn"></span></a>
+        <a href="#/appliances" data-nav="appliances">Appliances</a>
+        <a href="#/usage" data-nav="usage">Usage &amp; meter</a>
+        <a href="#/tips" data-nav="tips">Savings tips <span class="count hidden" id="navTips"></span></a>
+        <a href="#/planner" data-nav="planner">Savings planner</a>
+        <a href="#/reports" data-nav="reports">Reports</a>
+        <a href="#/settings" data-nav="settings">Rates &amp; goals</a>
+        <a href="#/team" data-nav="team" id="navTeam">Team</a>
+      </nav>
+      <div class="side-foot">
+        <button class="wide leave-btn" id="leaveBtn" type="button">Leaving home: all off</button>
+        <p class="tiny muted">Keeps the fridge and Wi-Fi on.</p>
+      </div>
+    </aside>
+    <div class="side-shade hidden" id="sideShade"></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="ghost menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="side">Menu</button>
+        <form id="searchForm" class="search-form" role="search">
+          <input class="search" id="globalSearch" type="search" placeholder="Search appliances" aria-label="Search appliances">
+        </form>
+        <div class="spacer"></div>
+        <span class="rate-chip hidden" id="rateChip"></span>
+        <button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button>
+        <button class="ghost who" id="who" type="button" title="Change password"></button>
+        <button id="logoutBtn" type="button">Sign out</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Modal dialog used by all forms -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="ghost" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="small err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
