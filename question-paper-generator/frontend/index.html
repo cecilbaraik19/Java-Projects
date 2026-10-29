@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Question Paper Generator</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- Sign-in screen: a chalkboard on the left, an index card on the right -->
+  <div id="login" class="login hidden">
+    <section class="board">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M8 4h12l6 6v18H8z"/><path d="M20 4v6h6"/><path d="M12 15h10M12 19h10M12 23h6"/></svg>
+        </span>
+        <span><b>Question Paper Generator</b><small>Exam cell</small></span>
+      </div>
+      <div class="board-text">
+        <h1>From question bank to <u>printed paper</u> in one click.</h1>
+        <p>Keep every question in one bank, describe the paper you want, and let the generator pick a fair
+          mix of easy, medium and hard questions from every unit. Make Set A, B and C, review, approve and print.</p>
+      </div>
+      <ol class="chalk-steps" aria-label="How it works">
+        <li><b>Bank</b> questions by unit, marks and level</li>
+        <li><b>Blueprint</b> the sections and the mix</li>
+        <li><b>Generate</b> sets with no repeats</li>
+        <li><b>Review</b>, approve and print</li>
+      </ol>
+    </section>
+    <section class="login-side">
+      <div class="login-tools"><button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button></div>
+      <form id="loginForm" class="index-card login-card" autocomplete="on">
+        <h2>Sign in</h2>
+        <div class="field">
+          <label for="lu">Username</label>
+          <input id="lu" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="lp">Password</label>
+          <input id="lp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="loginErr" class="err-text small" role="alert"></p>
+        <button class="primary wide" type="submit">Sign in</button>
+        <div class="demo">
+          <b>Demo accounts (click to fill)</b>
+          <button type="button" class="link" data-demo="meera:hod12345">meera / hod12345 <span>Head of Department</span></button>
+          <button type="button" class="link" data-demo="rohan:faculty123">rohan / faculty123 <span>Faculty</span></button>
+          <button type="button" class="link" data-demo="ananya:faculty123">ananya / faculty123 <span>Faculty</span></button>
+          <button type="button" class="link" data-demo="admin:admin123">admin / admin123 <span>Admin</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" class="shell hidden">
+    <aside class="rail" id="rail">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M8 4h12l6 6v18H8z"/><path d="M20 4v6h6"/><path d="M12 15h10M12 19h10M12 23h6"/></svg>
+        </span>
+        <span><b>Question Paper</b><small>Generator</small></span>
+      </div>
+      <nav class="nav" id="nav" aria-label="Main">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <span class="nav-head">Questions</span>
+        <a href="#/bank" data-nav="bank">Question bank</a>
+        <a href="#/coverage" data-nav="coverage">Coverage</a>
+        <span class="nav-head">Papers</span>
+        <a href="#/blueprints" data-nav="blueprints">Blueprints</a>
+        <a href="#/generate" data-nav="generate" class="nav-cta">Generate paper</a>
+        <a href="#/papers" data-nav="papers">All papers <span class="count hidden" id="navReview" title="Waiting for review"></span></a>
+        <span class="nav-head">Setup</span>
+        <a href="#/subjects" data-nav="subjects">Subjects &amp; units</a>
+        <a href="#/settings" data-nav="settings" id="navSettings">Paper settings</a>
+        <a href="#/team" data-nav="team" id="navTeam">Team</a>
+      </nav>
+      <div class="rail-foot small">
+        <span id="railInstitute"></span>
+      </div>
+    </aside>
+    <div class="rail-shade hidden" id="railShade"></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="ghost menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-controls="rail">Menu</button>
+        <form id="searchForm" class="search-form" role="search">
+          <input class="search" id="globalSearch" type="search" placeholder="Search questions (text, id or tag)" aria-label="Search questions">
+        </form>
+        <div class="spacer"></div>
+        <button class="ghost theme-btn" type="button" data-theme-toggle>Dark mode</button>
+        <button class="ghost who" id="who" type="button" title="Change password"></button>
+        <button id="logoutBtn" type="button">Sign out</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="ghost" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text small" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
