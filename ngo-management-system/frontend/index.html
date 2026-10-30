@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NGO Management System</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- ============ Sign-in screen ============ -->
+  <div id="login" class="login hidden">
+    <div class="login-banner">
+      <div class="login-tools"><button class="chip-btn theme-btn" type="button" data-theme-toggle>Dark mode</button></div>
+      <div class="wordmark big">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="/static/favicon.svg#flower"/></svg></span>
+        <span><b id="loginOrg">Asha Kiran Foundation</b><small>NGO Management System</small></span>
+      </div>
+      <h1>Every program, volunteer and rupee &mdash; <em>in one place.</em></h1>
+      <p class="lede">Plan field activities, let volunteers sign up, record donations with receipts, keep spending inside the budget,
+        and see how many people your work has reached.</p>
+      <ul class="petals" aria-label="What you can do">
+        <li><b>Programs</b>budget and impact</li>
+        <li><b>Activities</b>camps, classes, drives</li>
+        <li><b>Volunteers</b>sign-ups and hours</li>
+        <li><b>Funds</b>donations and expenses</li>
+      </ul>
+      <div class="toran" aria-hidden="true"></div>
+    </div>
+    <form id="loginForm" class="card login-card" autocomplete="on">
+      <h2>Sign in</h2>
+      <label class="field">Username<input id="lu" name="username" autocomplete="username" required></label>
+      <label class="field">Password<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+      <p id="loginErr" class="err-text" role="alert"></p>
+      <button class="btn primary wide" type="submit">Sign in</button>
+      <div class="demo">
+        <b>Demo accounts &mdash; click to fill</b>
+        <button type="button" class="demo-row" data-demo="admin:admin123"><span>admin / admin123</span><i>Director / Admin</i></button>
+        <button type="button" class="demo-row" data-demo="kavita:manager123"><span>kavita / manager123</span><i>Program Manager</i></button>
+        <button type="button" class="demo-row" data-demo="rahul:finance123"><span>rahul / finance123</span><i>Finance Officer</i></button>
+        <button type="button" class="demo-row" data-demo="aman:volunteer123"><span>aman / volunteer123</span><i>Volunteer</i></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ Main app ============ -->
+  <div id="app" class="hidden">
+    <header class="banner">
+      <div class="banner-row">
+        <a class="wordmark" href="#/home">
+          <span class="mark" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="/static/favicon.svg#flower"/></svg></span>
+          <span><b id="orgName">Asha Kiran Foundation</b><small>NGO Management System</small></span>
+        </a>
+        <div class="spacer"></div>
+        <button class="chip-btn theme-btn" type="button" data-theme-toggle>Dark mode</button>
+        <button class="chip-btn who" id="who" type="button" title="Change password"></button>
+        <button class="chip-btn" id="logoutBtn" type="button">Sign out</button>
+      </div>
+      <nav class="tabs" id="nav" aria-label="Main"></nav>
+      <div class="toran" aria-hidden="true"></div>
+    </header>
+    <main class="page" id="view" tabindex="-1"></main>
+    <footer class="foot" id="foot"></footer>
+  </div>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="chip-btn" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <!-- Printable sheet (receipt or report) - only this prints -->
+  <div id="printArea" class="print-area" aria-hidden="true"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

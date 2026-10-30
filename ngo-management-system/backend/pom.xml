@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Backend Maven build file. Optional: the backend also builds with plain javac using run.bat / run.sh.
+  There are no external dependencies - only the JDK.
+    mvn package                          -> target/ngo-management-system.jar
+    java -jar target/ngo-management-system.jar   (run from the backend folder)
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.cecil</groupId>
+  <artifactId>ngo-management-system-backend</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>NGO Management System - Backend</name>
+  <description>Manages NGO activities: programs, field activities, volunteers, donations, expenses and beneficiaries</description>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <finalName>ngo-management-system</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.cecil.ngo.App</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <!-- runs the built-in test suite during `mvn test` / `mvn package` -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>run-tests</id>
+            <phase>test</phase>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <executable>java</executable>
+              <classpathScope>test</classpathScope>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>com.cecil.ngo.AllTests</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
