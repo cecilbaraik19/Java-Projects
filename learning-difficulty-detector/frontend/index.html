@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Learning Difficulty Detector</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- ============ Sign-in screen: the cover of a survey map ============ -->
+  <div id="login" class="login hidden">
+    <section class="login-map">
+      <div class="login-tools"><button class="tag-btn theme-btn" type="button" data-theme-toggle>Night map</button></div>
+      <div class="cartouche big">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/favicon.svg#peak"/></svg>
+        <div>
+          <small class="mono" id="loginInst">Amity University Jharkhand</small>
+          <b>Smart Learning<br>Difficulty Detector</b>
+        </div>
+      </div>
+      <h1>Find the <em>peaks</em> before your students get stuck on them.</h1>
+      <p class="lede">Every quiz answer is a survey reading: right or wrong, how long it took, whether a hint was needed,
+        and how sure the student felt. The detector turns those readings into a <b>Difficulty Index</b> for every topic
+        and draws them as a map &mdash; low valleys are easy, high summits need help.</p>
+      <ol class="legend-strip" aria-label="Height zones">
+        <li class="z-easy"><b>Valley</b>Easy</li>
+        <li class="z-moderate"><b>Foothills</b>Moderate</li>
+        <li class="z-difficult"><b>Highlands</b>Difficult</li>
+        <li class="z-critical"><b>Summit</b>Very difficult</li>
+      </ol>
+      <p class="coords mono" aria-hidden="true">23&deg;21&prime;N &nbsp; 85&deg;20&prime;E &nbsp;&middot;&nbsp; Survey sheet 01</p>
+    </section>
+    <form id="loginForm" class="panel login-card" autocomplete="on">
+      <p class="eyebrow mono">Sign in</p>
+      <h2>Open your map</h2>
+      <label class="field">Username<input id="lu" name="username" autocomplete="username" required></label>
+      <label class="field">Password<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+      <p id="loginErr" class="err-text" role="alert"></p>
+      <button class="btn primary wide" type="submit">Sign in</button>
+      <div class="demo">
+        <b class="mono">Demo accounts &mdash; click to fill</b>
+        <button type="button" class="demo-row" data-demo="admin:admin123"><span>admin / admin123</span><i>Admin</i></button>
+        <button type="button" class="demo-row" data-demo="neha:teacher123"><span>neha / teacher123</span><i>Teacher</i></button>
+        <button type="button" class="demo-row" data-demo="riya:student123"><span>riya / student123</span><i>Student</i></button>
+        <button type="button" class="demo-row" data-demo="karan:student123"><span>karan / student123</span><i>Student (struggling)</i></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ Main app ============ -->
+  <div id="app" class="shell hidden">
+    <aside class="rail" id="rail">
+      <a class="cartouche" href="#/home">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/favicon.svg#peak"/></svg>
+        <div><small class="mono" id="instName"></small><b>Learning Difficulty<br>Detector</b></div>
+      </a>
+      <nav id="nav" class="nav" aria-label="Main"></nav>
+      <div class="key" aria-label="Map key">
+        <p class="mono key-title">Key &middot; Difficulty Index</p>
+        <ul class="key-list" id="keyList"></ul>
+      </div>
+      <div class="rail-foot">
+        <button class="tag-btn theme-btn" type="button" data-theme-toggle>Night map</button>
+        <button class="tag-btn" id="who" type="button" title="Change password"></button>
+        <button class="tag-btn" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="tag-btn menu-btn" id="menuBtn" type="button" aria-controls="rail" aria-expanded="false">Menu</button>
+        <p class="crumbs mono" id="crumbs"></p>
+        <div class="spacer"></div>
+        <div id="topTools" class="top-tools"></div>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+      <footer class="foot">
+        <div class="scale" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="mono">0 &nbsp; 25 &nbsp; 50 &nbsp; 75 &nbsp; 100 DI</span></div>
+        <span class="mono" id="foot"></span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="tag-btn" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
