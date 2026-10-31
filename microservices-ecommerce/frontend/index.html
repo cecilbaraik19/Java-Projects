@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bandar Bazaar - Online Store</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- ============ Top bar: the "gate" of the harbour ============ -->
+  <header class="gate">
+    <div class="gate-row">
+      <a class="brand" href="#/shop" aria-label="Bandar Bazaar home">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>
+        <span class="brand-text"><b>Bandar Bazaar</b><small>shop smart &middot; ship fast</small></span>
+      </a>
+      <form class="search" id="searchForm" role="search">
+        <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-search"/></svg>
+        <input id="searchBox" type="search" placeholder="Search products, brands, SKU" aria-label="Search products" autocomplete="off">
+      </form>
+      <nav class="gate-actions" aria-label="Account">
+        <button class="icon-btn" type="button" id="themeBtn" title="Dark / light mode"><svg class="ic"><use href="/static/icons.svg#i-moon"/></svg></button>
+        <div class="bell-wrap hidden" id="bellWrap">
+          <button class="icon-btn" type="button" id="bellBtn" title="Notifications" aria-expanded="false"><svg class="ic"><use href="/static/icons.svg#i-bell"/></svg><span class="dot hidden" id="bellDot"></span></button>
+          <div class="inbox hidden" id="inbox" role="dialog" aria-label="Notifications"></div>
+        </div>
+        <a class="icon-btn cart-btn hidden" id="cartBtn" href="#/cart" title="Cart"><svg class="ic"><use href="/static/icons.svg#i-cart"/></svg><span class="count hidden" id="cartCount">0</span></a>
+        <a class="pill-btn" id="signInBtn" href="#/login">Sign in</a>
+        <button class="pill-btn hidden" type="button" id="userBtn"></button>
+        <div class="user-menu hidden" id="userMenu"></div>
+      </nav>
+    </div>
+    <nav class="lanes" id="lanes" aria-label="Main"></nav>
+    <div class="hazard" aria-hidden="true"></div>
+  </header>
+
+  <div class="banner hidden" id="banner" role="status"></div>
+  <main class="page" id="view" tabindex="-1"></main>
+
+  <footer class="site-foot">
+    <div class="cols">
+      <div><h4>Bandar Bazaar</h4><p>Big brands, small prices - shipped from our harbour to your door.</p><p>Made-up store for a college project. No real money or products.</p></div>
+      <div><h4>Shop</h4><a href="#/shop?cat=Electronics">Electronics</a><a href="#/shop?cat=Fashion">Fashion</a><a href="#/shop?cat=Home%20%26%20Kitchen">Home &amp; Kitchen</a><a href="#/shop?cat=Books">Books</a></div>
+      <div><h4>Your account</h4><a href="#/orders">My orders</a><a href="#/wallet">Bandar Pay wallet</a><a href="#/cart">Cart</a><a href="#/register">Create account</a></div>
+      <div><h4>Help</h4><p>Free delivery above &#8377;999.</p><p>Cancel from My orders any time before your parcel ships - the money comes back to your wallet at once.</p></div>
+    </div>
+    <div class="legal">&copy; 2026 Bandar Bazaar &middot; Product photos from Unsplash</div>
+  </footer>
+
+  <!-- Request ticker: every API call, which service answered, how long it took -->
+  <footer class="ticker hidden" id="ticker" aria-label="Recent API calls">
+    <span class="ticker-label"><svg class="ic"><use href="/static/icons.svg#i-signal"/></svg> Live API calls</span>
+    <ol id="tickerList"></ol>
+  </footer>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="icon-btn" id="modalClose" aria-label="Close"><svg class="ic"><use href="/static/icons.svg#i-x"/></svg></button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+  <script src="/static/arch.js"></script>
+</body>
+</html>
