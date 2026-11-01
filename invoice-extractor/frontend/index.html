@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bahi &middot; AI Invoice Data Extractor</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no white flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- ============ Sign-in: the cover of the ledger ============ -->
+  <div id="login" class="login hidden">
+    <section class="cover">
+      <div class="cover-tools"><button class="theme-toggle on-cloth" type="button" data-theme-toggle>Dark mode</button></div>
+      <div class="cover-plate">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/favicon.svg#bahi"/></svg>
+        <div>
+          <small id="loginCompany">Nova Learning Pvt Ltd</small>
+          <b>Bahi</b>
+          <span>AI-Based Invoice Data Extractor</span>
+        </div>
+      </div>
+      <h1>Drop in a bill.<br><em>Get the ledger entry.</em></h1>
+      <p class="lede">Bahi reads supplier invoices &mdash; text, PDF or (with Claude) a photo &mdash; and pulls out the
+        vendor, GSTIN, invoice number, dates, items, CGST / SGST / IGST and total. Every value comes with a
+        confidence score and the line it was read from. Eleven cross-checks catch misread figures, wrong GST and
+        duplicate bills, and every correction you make teaches it that vendor's layout.</p>
+      <ol class="cover-steps">
+        <li><b>Scan</b>upload or paste</li>
+        <li><b>Read</b>fields, items, tax</li>
+        <li><b>Check</b>sums, GSTIN, duplicates</li>
+        <li><b>Stamp</b>approve &amp; export</li>
+      </ol>
+      <div class="cover-stamps" aria-hidden="true">
+        <span class="stamp s-approved">Approved</span>
+        <span class="stamp s-review">To review</span>
+        <span class="stamp s-rejected">Duplicate</span>
+      </div>
+    </section>
+    <form id="loginForm" class="sheet login-card" autocomplete="on">
+      <p class="folio">Sign in</p>
+      <h2>Open the day book</h2>
+      <label class="field">Username<input id="lu" name="username" autocomplete="username" required></label>
+      <label class="field">Password<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+      <p id="loginErr" class="err-text" role="alert"></p>
+      <button class="btn primary wide" type="submit">Sign in</button>
+      <div class="demo">
+        <b>Demo logins &mdash; click to fill</b>
+        <button type="button" class="demo-row" data-demo="meera:accounts123"><span>meera / accounts123</span><i>Accountant</i></button>
+        <button type="button" class="demo-row" data-demo="ravi:clerk123"><span>ravi / clerk123</span><i>Clerk</i></button>
+        <button type="button" class="demo-row" data-demo="admin:admin123"><span>admin / admin123</span><i>Admin</i></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ Main app: the ledger ============ -->
+  <div id="app" class="shell hidden">
+    <aside class="binding" id="binding">
+      <a class="plate" href="#/home">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/favicon.svg#bahi"/></svg>
+        <div><b>Bahi</b><small id="coName"></small></div>
+      </a>
+      <nav id="nav" class="nav" aria-label="Main"></nav>
+      <div class="binding-foot">
+        <button class="chip-btn" id="who" type="button" title="Change password"></button>
+        <button class="chip-btn" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </aside>
+    <div class="desk">
+      <header class="folio-bar">
+        <button class="chip-btn menu-btn" id="menuBtn" type="button" aria-controls="binding" aria-expanded="false">Menu</button>
+        <p class="folio" id="folio"></p>
+        <div class="spacer"></div>
+        <div id="topTools" class="top-tools"></div>
+        <button class="theme-toggle" type="button" data-theme-toggle>Dark mode</button>
+      </header>
+      <main class="page" id="view" tabindex="-1"></main>
+      <footer class="foot"><span id="foot"></span></footer>
+    </div>
+  </div>
+
+  <!-- One dialog used by every form -->
+  <dialog id="modal" class="modal">
+    <form method="dialog" id="modalForm" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="chip-btn" id="modalClose" aria-label="Close">Close</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <p class="err-text" id="modalErr" role="alert"></p>
+      <footer class="modal-foot" id="modalFoot"></footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+KANCHAN STATIONERY MART
+Shop 14, Main Road, Ranchi, Jharkhand - 834001
+Phone: 0651-2201145 | Email: sales@kanchan.example
+GSTIN: 20ABCPK1234M1Z4
+
+                            TAX INVOICE
+
+Invoice No   : KSM/201                Invoice Date : 28/10/2026
+PO No        : -                      Due Date     : 27/11/2026
+
+Bill To:
+Nova Learning Pvt Ltd
+Plot 7, Kanke Road, Ranchi, Jharkhand - 834008
+GSTIN: 20AAICN4821K1ZL
+
+Sr  Description                         HSN       Qty        Rate        Amount
+-------------------------------------------------------------------------------
+1   Lever Arch File                     4820        2       95.00        190.00
+2   Stapler Heavy Duty                  8472       15      420.00      6,300.00
+-------------------------------------------------------------------------------
+                                              Sub Total                6,490.00
+                                              CGST @ 6%                  389.40
+                                              SGST @ 6%                  389.40
+                                              Grand Total              7,268.80
+
+Amount in Words: Rupees Seven Thousand Two Hundred Sixty Eight and Eighty Paise Only
+Payment Terms: Net 30
+Bank: Example Bank, IFSC EXMP0001234
+
+                                          For Kanchan Stationery Mart
+                                          Authorised Signatory

@@ -1,0 +1,17 @@
+SKYROUTE TRAVELS
+Fraser Road, Patna 800001  Ph 0612-2345678
+GSTIN 10AAPFS2468H1Z4
+----------------------------------------
+INVOICE
+Inv# SRT-0204         Dt: 28/10/26
+Customer: Nova Learning Pvt Ltd
+GSTIN 20AAICN4821K1ZL
+----------------------------------------
+Item                       Qty       Amt
+Air ticket service fee       3  1,350.00
+----------------------------------------
+Subtotal                        1,350.00
+IGST 18%                          243.00
+TOTAL                       Rs. 1,593.00
+----------------------------------------
+Thank you! Please pay within 7 days.

@@ -1,0 +1,23 @@
+CLOUDNEST SOFTWARE SOLUTIONS LLP
+4th Floor, Tech Park, Outer Ring Road, Bengaluru, Karnataka 560103
+GSTIN/UIN: 29AAKFC5678P1ZF              State: Karnataka
+
+TAX INVOICE
+
+Invoice No.       Date              Due Date          PO No.
+CN-26-0202        28-Oct-2026       12-Nov-2026       PO-NL-941
+
+Invoice To:
+Nova Learning Pvt Ltd, Ranchi
+GSTIN: 20AAICN4821K1ZL
+
+Particulars                             SAC       Qty       Price        Total
+Cloud hosting - Standard plan           998315      1    4,500.00     4,500.00
+Backup storage 500 GB                   998315      1    1,200.00     1,200.00
+
+Taxable Value                                                         5,700.00
+IGST 18%                                                              1,026.00
+Total Amount Payable                                              Rs. 6,726.00
+Rupees Six Thousand Seven Hundred Twenty Six Only
+
+This is a computer generated invoice.

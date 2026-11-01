@@ -1,0 +1,32 @@
+KANCHAN STATIONERY MART
+Shop 14, Main Road, Ranchi, Jharkhand - 834001
+Phone: 0651-2201145 | Email: sales@kanchan.example
+GSTIN: 20ABCPK1234M1Z4
+
+                            TAX INVOICE
+
+lnvoice N0   : KSM/206                Invoice Dale : 28/10/2026
+PO No        : -                      Due Date     : 27/11/2026
+
+Bill To:
+Nova Learning Pvt Ltd
+Plot 7, Kanke Road, Ranchi, Jharkhand - 834008
+GSTIN: 20AAICN4821K1ZL
+
+Sr  Description                         HSN       Qty        Rate        Amount
+-------------------------------------------------------------------------------
+1   Long Register 200 Pages             4820       13      110.00      1,430.O0
+2   Stapler Heavy Duty                  8472       18      420.00      7,560.O0
+3   Whiteboard Marker Set               9608       17      180.00      3,060.O0
+-------------------------------------------------------------------------------
+                                              Sub-Totai               12,050.O0
+                                              CGST @ 6%                  723.O0
+                                              SGST @ 6%                  723.O0
+                                              Grand Tota1             13,496.O0
+
+Amount in Words: Rupees Thirteen Thousand Four Hundred Ninety Six Only
+Payment Terms: Net 30
+Bank: Example Bank, IFSC EXMP0001234
+
+                                          For Kanchan Stationery Mart
+                                          Authorised Signatory

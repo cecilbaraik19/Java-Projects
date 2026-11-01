@@ -1,0 +1,31 @@
+PIXEL PRINT HOUSE
+Upper Bazar, Ranchi, Jharkhand - 834001
+Phone: 0651-2207788
+GSTIN: 20AAMFP7410R1ZW
+
+                            TAX INVOICE
+
+Invoice No   : PPH/205                Invoice Date : 28/10/2026
+PO No        : -                      Due Date     : 27/11/2026
+
+Bill To:
+Nova Learning Pvt Ltd
+Plot 7, Kanke Road, Ranchi, Jharkhand - 834008
+GSTIN: 20AAICN4821K1ZL
+
+Sr  Description                         HSN       Qty        Rate        Amount
+-------------------------------------------------------------------------------
+1   Visiting cards (box of 100)         4911        1      350.00        350.00
+2   Brochure printing A4 colour         4911        1       18.00         18.00
+-------------------------------------------------------------------------------
+                                              Sub Total                  368.00
+                                              CGST @ 9%                   33.12
+                                              SGST @ 9%                   33.12
+                                              Grand Total                434.24
+
+Amount in Words: Rupees Four Hundred Thirty Four and Twenty Four Paise Only
+Payment Terms: Net 30
+Bank: Example Bank, IFSC EXMP0001234
+
+                                          For Pixel Print House
+                                          Authorised Signatory

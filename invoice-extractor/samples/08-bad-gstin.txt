@@ -1,0 +1,32 @@
+FixRight Facility Services
+Bistupur, Jamshedpur, Jharkhand - 831001
+Phone: 0657-2423344
+GSTIN: 20AAKFF3344C1ZA
+
+                            TAX INVOICE
+
+Invoice No   : FR-208                 Invoice Date : 28/10/2026
+PO No        : PO-NL-988              Due Date     : 27/11/2026
+
+Bill To:
+Nova Learning Pvt Ltd
+Plot 7, Kanke Road, Ranchi, Jharkhand - 834008
+GSTIN: 20AAICN4821K1ZL
+
+Sr  Description                         HSN       Qty        Rate        Amount
+-------------------------------------------------------------------------------
+1   Plumbing repair - washroom          998729      3    1,200.00      3,600.00
+2   Electrical wiring work              998719      2    2,400.00      4,800.00
+3   Split AC servicing                  998719      4      750.00      3,000.00
+-------------------------------------------------------------------------------
+                                              Sub Total               11,400.00
+                                              CGST @ 9%                1,026.00
+                                              SGST @ 9%                1,026.00
+                                              Grand Total             13,452.00
+
+Amount in Words: Rupees Thirteen Thousand Four Hundred Fifty Two Only
+Payment Terms: Net 30
+Bank: Example Bank, IFSC EXMP0001234
+
+                                          For FixRight Facility Services
+                                          Authorised Signatory
