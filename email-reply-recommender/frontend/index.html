@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patra – AI Email Reply Desk</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Courier+Prime:wght@400;700&display=swap">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+
+<!-- ======================= SIGN IN: an airmail envelope ======================= -->
+<div id="login" class="login" hidden>
+  <div class="login-top">
+    <span class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 28" aria-hidden="true"><rect x="1" y="1" width="38" height="26" rx="2"/><path d="M2 3l18 14L38 3"/></svg>
+      <span class="brand-name">Patra</span>
+    </span>
+    <button class="ghost-btn" type="button" data-theme-toggle>Dark mode</button>
+  </div>
+  <div class="envelope-wrap">
+    <section class="login-copy">
+      <p class="org" id="loginOrg"></p>
+      <h1>Answer every email well, in half the time.</h1>
+      <p>Patra reads each email in your inbox, works out what the sender wants, how they feel and how soon they
+        need an answer, then drafts three professional replies: formal, friendly and brief. You pick one, edit it,
+        and send.</p>
+    </section>
+    <form id="loginForm" class="airmail login-card" autocomplete="on" novalidate>
+      <div class="airmail-paper">
+        <h2>Sign in</h2>
+        <label class="field">Username<input id="lu" name="username" autocomplete="username" required></label>
+        <label class="field">Password<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+        <p id="loginErr" class="err-text" role="alert"></p>
+        <button class="btn btn-blue wide" type="submit">Sign in</button>
+        <div class="demo">
+          <p>Demo accounts. Click one to fill it in.</p>
+          <button type="button" class="demo-row" data-demo="aditi:agent123"><span>aditi / agent123</span><i>Student Help Desk</i></button>
+          <button type="button" class="demo-row" data-demo="rohan:agent123"><span>rohan / agent123</span><i>HoD office</i></button>
+          <button type="button" class="demo-row" data-demo="admin:admin123"><span>admin / admin123</span><i>Admin</i></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= THE APP ======================= -->
+<div id="app" hidden>
+<header class="topbar">
+  <a class="brand" href="#/inbox" aria-label="Patra inbox">
+    <svg class="brand-mark" viewBox="0 0 40 28" aria-hidden="true"><rect x="1" y="1" width="38" height="26" rx="2"/><path d="M2 3l18 14L38 3"/></svg>
+    <span class="brand-name">Patra</span>
+    <span class="brand-tag" id="orgName"></span>
+  </a>
+  <nav class="nav" id="nav" aria-label="Main"></nav>
+  <div class="who">
+    <button class="ghost-btn" type="button" data-theme-toggle>Dark mode</button>
+    <button class="ghost-btn" type="button" id="logoutBtn">Sign out</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ INBOX ============ -->
+  <section class="view view-inbox" id="view-inbox" hidden>
+    <aside class="inbox" aria-label="Inbox">
+      <div class="inbox-head">
+        <h1>Inbox</h1>
+        <button class="btn btn-blue" id="openPaste" type="button">Paste an email</button>
+      </div>
+      <div class="filter-row" role="group" aria-label="Filter inbox">
+        <button class="chip is-on" data-filter="all" type="button">All</button>
+        <button class="chip" data-filter="open" type="button">Waiting</button>
+        <button class="chip" data-filter="HIGH" type="button">Urgent</button>
+        <button class="chip" data-filter="NEGATIVE" type="button">Upset senders</button>
+      </div>
+      <ul class="envelopes" id="envelopes"></ul>
+    </aside>
+
+    <div class="desk" id="desk">
+      <div class="desk-empty" id="deskEmpty">
+        <svg viewBox="0 0 120 80" aria-hidden="true"><rect x="4" y="4" width="112" height="72" rx="4"/><path d="M6 8l54 40L114 8"/></svg>
+        <h2>Pick an email to answer</h2>
+        <p>Patra reads it, works out what the sender wants and how they feel, then drafts three replies you can edit.</p>
+      </div>
+
+      <div class="desk-full" id="deskFull" hidden>
+        <button class="back-link" id="backToInbox" type="button">Back to inbox</button>
+
+        <article class="letter-in">
+          <div class="postmark-wrap" id="postmarkWrap">
+            <svg class="postmark" viewBox="0 0 160 160" aria-hidden="true">
+              <defs><path id="pmArc" d="M80,80 m-58,0 a58,58 0 1,1 116,0 a58,58 0 1,1 -116,0"/></defs>
+              <circle cx="80" cy="80" r="72" class="pm-ring"/>
+              <circle cx="80" cy="80" r="48" class="pm-ring pm-inner"/>
+              <text class="pm-arc"><textPath href="#pmArc" id="pmArcText">PATRA SORTING OFFICE</textPath></text>
+              <text x="80" y="76" class="pm-main" id="pmIntent">Intent</text>
+              <text x="80" y="96" class="pm-sub" id="pmConf">0% SURE</text>
+            </svg>
+            <svg class="cancel-lines" viewBox="0 0 140 60" aria-hidden="true">
+              <path d="M0 10 q17 -8 35 0 t35 0 t35 0 t35 0"/><path d="M0 24 q17 -8 35 0 t35 0 t35 0 t35 0"/>
+              <path d="M0 38 q17 -8 35 0 t35 0 t35 0 t35 0"/><path d="M0 52 q17 -8 35 0 t35 0 t35 0 t35 0"/>
+            </svg>
+          </div>
+          <p class="from"><strong id="inFrom">Sender</strong> <span id="inEmail"></span></p>
+          <h2 class="subject" id="inSubject">Subject</h2>
+          <time class="when" id="inWhen"></time>
+          <div class="typed letter-body" id="inBody"></div>
+          <button class="text-btn" id="deleteEmail" type="button">Remove from inbox</button>
+        </article>
+
+        <p class="unsure-note" id="unsureNote" hidden>Patra is not sure what type of email this is. Check <b>Treat it as</b> below before you send.</p>
+
+        <section class="reading" aria-label="What Patra noticed">
+          <div class="read-item">
+            <h3>Mood</h3>
+            <p class="read-value" id="rdMood">-</p>
+            <div class="mood-scale" aria-hidden="true"><span class="mood-dot" id="moodDot"></span></div>
+            <p class="read-note" id="rdMoodWords"></p>
+          </div>
+          <div class="read-item">
+            <h3>Urgency</h3>
+            <p class="read-value" id="rdUrgency">-</p>
+            <p class="read-note" id="rdUrgencyWhy"></p>
+          </div>
+          <div class="read-item">
+            <h3>Details found</h3>
+            <ul class="details" id="rdDetails"></ul>
+          </div>
+          <details class="read-item read-why">
+            <summary>Why this type? <span id="rdAltsShort"></span></summary>
+            <div class="why-grid">
+              <div><h4>Final score</h4><ul class="score-list" id="whyFinal"></ul></div>
+              <div><h4>Naive Bayes (65%)</h4><ul class="score-list" id="whyNb"></ul></div>
+              <div><h4>Cue words (35%)</h4><ul class="score-list" id="whyCues"></ul><p class="read-note" id="whyCueWords"></p></div>
+            </div>
+          </details>
+        </section>
+
+        <section class="reply" aria-label="Reply">
+          <div class="reply-controls">
+            <div class="control">
+              <span class="control-label" id="stanceLabel">Your answer</span>
+              <div class="segmented" id="stance" role="radiogroup" aria-labelledby="stanceLabel">
+                <button role="radio" data-stance="POSITIVE" type="button">Yes / help</button>
+                <button role="radio" data-stance="NEED_INFO" type="button">Ask for details</button>
+                <button role="radio" data-stance="DECLINE" type="button">Politely decline</button>
+              </div>
+            </div>
+            <div class="control">
+              <label class="control-label" for="intentSelect">Treat it as</label>
+              <select id="intentSelect"></select>
+            </div>
+          </div>
+
+          <div class="tones" role="tablist" id="tones"></div>
+
+          <div class="reply-grid">
+            <div class="airmail">
+              <div class="airmail-paper">
+                <div class="re-line"><span>Subject</span><input id="replySubject" aria-label="Reply subject" maxlength="220"></div>
+                <textarea id="replyBody" class="typed" spellcheck="true" aria-label="Reply text" maxlength="6000"></textarea>
+              </div>
+            </div>
+
+            <aside class="gauge-card" aria-live="polite">
+              <h3>Professional score</h3>
+              <div class="gauge">
+                <svg viewBox="0 0 120 70" aria-hidden="true">
+                  <path class="gauge-track" d="M10 62 A50 50 0 0 1 110 62"/>
+                  <path class="gauge-fill" id="gaugeFill" d="M10 62 A50 50 0 0 1 110 62"/>
+                </svg>
+                <p class="gauge-num"><span id="gScore">0</span><small id="gGrade">-</small></p>
+              </div>
+              <dl class="facts">
+                <div><dt>Style</dt><dd id="gFormality">-</dd></div>
+                <div><dt>Reading ease</dt><dd id="gRead">-</dd></div>
+                <div><dt>Words</dt><dd id="gWords">-</dd></div>
+              </dl>
+              <ul class="issues" id="gIssues"></ul>
+            </aside>
+          </div>
+
+          <div class="reply-actions">
+            <button class="btn btn-red" id="saveReply" type="button">Save reply</button>
+            <button class="btn btn-line" id="copyReply" type="button">Copy text</button>
+            <a class="btn btn-line" id="mailReply" href="#">Open in mail app</a>
+            <button class="btn btn-line" id="polishBtn" type="button" hidden>Polish with Claude</button>
+            <span class="helpful">
+              Was this suggestion useful?
+              <button class="thumb" data-rate="1" type="button" aria-label="Useful">👍</button>
+              <button class="thumb" data-rate="-1" type="button" aria-label="Not useful">👎</button>
+            </span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SAVED REPLIES ============ -->
+  <section class="view page" id="view-saved" hidden>
+    <div class="page-head">
+      <h1>Saved replies</h1>
+      <p>Every reply you saved. Marking one as useful confirms the email type, and Patra learns from it.</p>
+    </div>
+    <ul class="saved-list" id="savedList"></ul>
+  </section>
+
+  <!-- ============ INSIGHTS ============ -->
+  <section class="view page" id="view-insights" hidden>
+    <div class="page-head with-switch">
+      <div>
+        <h1>Insights</h1>
+        <p id="insightsSub">What kind of mail arrives, how senders feel, and how good the replies have been.</p>
+      </div>
+      <div class="segmented small" id="scopeSwitch" role="radiogroup" aria-label="Show" hidden>
+        <button role="radio" data-scope="mine" type="button" aria-checked="true">My inbox</button>
+        <button role="radio" data-scope="office" type="button" aria-checked="false">Whole office</button>
+      </div>
+    </div>
+    <div class="tally" id="tally"></div>
+    <div class="insight-grid">
+      <div class="panel span2"><h2>Replies saved, last 14 days</h2><div class="days" id="perDay"></div></div>
+      <div class="panel tall"><h2>Emails by type</h2><div class="bars" id="barIntent"></div></div>
+      <div class="panel"><h2>Sender mood</h2><div class="bars" id="barMood"></div></div>
+      <div class="panel"><h2>Tones chosen</h2><div class="bars" id="barTone"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ PROFILE / SIGNATURE ============ -->
+  <section class="view page" id="view-profile" hidden>
+    <div class="page-head">
+      <h1>Your signature</h1>
+      <p>Patra signs every suggested reply with your name and title.</p>
+    </div>
+    <div class="profile-grid">
+      <form class="stack-form" id="sigForm" novalidate>
+        <label class="field">Your name<input id="myName" maxlength="80" required></label>
+        <label class="field">Title or office<input id="myTitle" maxlength="80"></label>
+        <p class="err-text" id="sigErr" role="alert"></p>
+        <button class="btn btn-blue" type="submit">Save signature</button>
+      </form>
+      <div class="airmail sig-preview"><div class="airmail-paper typed">Yours sincerely,<br><span id="sigPrevName"></span><br><span id="sigPrevTitle"></span></div></div>
+    </div>
+    <h2 class="sub-head">Change password</h2>
+    <form class="stack-form" id="pwForm" novalidate>
+      <label class="field">Current password<input id="pwOld" type="password" autocomplete="current-password" required></label>
+      <label class="field">New password (8 or more characters)<input id="pwNew" type="password" autocomplete="new-password" minlength="8" required></label>
+      <p class="err-text" id="pwErr" role="alert"></p>
+      <button class="btn btn-line" type="submit">Change password</button>
+    </form>
+  </section>
+
+  <!-- ============ ADMIN: TEST BENCH ============ -->
+  <section class="view page" id="view-bench" hidden>
+    <div class="page-head with-switch">
+      <div>
+        <h1>Test bench</h1>
+        <p>Checks the email-type classifier on 77 test emails it never trained on, and compares three ways of deciding.</p>
+      </div>
+      <button class="btn btn-blue" id="runBench" type="button">Run the test</button>
+    </div>
+    <div id="benchOut"><p class="empty-note">Press Run the test. It takes under a second.</p></div>
+  </section>
+
+  <!-- ============ ADMIN: PEOPLE ============ -->
+  <section class="view page" id="view-people" hidden>
+    <div class="page-head"><h1>People</h1><p>Everyone who can sign in, and how their inbox is doing.</p></div>
+    <div class="table-wrap"><table class="table" id="peopleTable"></table></div>
+  </section>
+
+  <!-- ============ ADMIN: SETTINGS ============ -->
+  <section class="view page" id="view-settings" hidden>
+    <div class="page-head"><h1>Settings</h1><p>These apply to everyone.</p></div>
+    <form class="stack-form" id="settingsForm" novalidate>
+      <label class="field">Organisation name<input id="setOrg" maxlength="100"></label>
+      <label class="check"><input type="checkbox" id="setLearn"> Learn from replies marked useful</label>
+      <label class="check"><input type="checkbox" id="setClaude"> Let people polish replies with Claude</label>
+      <p class="read-note" id="claudeNote"></p>
+      <button class="btn btn-blue" type="submit">Save settings</button>
+    </form>
+  </section>
+</main>
+</div>
+
+<!-- paste email dialog -->
+<dialog id="pasteDialog" class="dialog">
+  <form id="pasteForm" novalidate>
+    <h2>Paste an email</h2>
+    <p class="dialog-note">Copy an email from Gmail or Outlook and paste it here. Only the message is required.</p>
+    <div class="two">
+      <label class="field">Sender name<input name="senderName" placeholder="Neha Gupta" maxlength="120"></label>
+      <label class="field">Sender email<input name="senderEmail" type="email" placeholder="neha@example.com" maxlength="160"></label>
+    </div>
+    <label class="field">Subject<input name="subject" placeholder="Meeting about the semester project" maxlength="200"></label>
+    <label class="field">Message<textarea name="body" class="typed" rows="8" maxlength="5000" placeholder="Hi, could we meet on Thursday at 4 pm to discuss..."></textarea></label>
+    <p class="err-text" id="pasteError" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-line" id="cancelPaste">Cancel</button>
+      <button type="submit" class="btn btn-blue">Add and read it</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- confirm dialog (instead of window.confirm) -->
+<dialog id="confirmDialog" class="dialog small">
+  <form id="confirmForm">
+    <p id="confirmText"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-line" id="confirmNo">Cancel</button>
+      <button type="submit" class="btn btn-red" id="confirmYes">Remove</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
