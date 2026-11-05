@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prashna – AI SQL Query Assistant</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets light / dark mode before the page is drawn, so there is no flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+
+<!-- ======================= SIGN IN: a job card ======================= -->
+<div id="login" class="login" hidden>
+  <div class="login-top">
+    <span class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 28" aria-hidden="true"><path d="M6 1h33v26H1V6z"/><g class="holes"><rect x="9" y="7" width="2" height="5"/><rect x="15" y="15" width="2" height="5"/><rect x="21" y="7" width="2" height="5"/><rect x="27" y="11" width="2" height="5"/><rect x="33" y="17" width="2" height="5"/></g></svg>
+      <span class="brand-name">Prashna</span>
+    </span>
+    <button class="key-btn small" type="button" data-theme-toggle>Dark mode</button>
+  </div>
+  <div class="login-wrap">
+    <section class="login-copy">
+      <p class="org" id="loginOrg"></p>
+      <h1>Ask your database a question in plain English.</h1>
+      <p>Type <em>"top 5 students from Ranchi by CGPA"</em>. Prashna works out which tables, columns and values you
+        mean, writes the SQL, runs it, prints the answer and explains every step – so you learn SQL while you use it.</p>
+      <ul class="login-points">
+        <li><b>Offline engine</b> written in plain Java: no internet needed</li>
+        <li><b>Read-only</b>: only SELECT can run, nothing can be changed or deleted</li>
+        <li><b>Learns</b> when you correct it</li>
+      </ul>
+    </section>
+    <form id="loginForm" class="punch-card login-card" autocomplete="on" novalidate>
+      <div class="card-strip" aria-hidden="true"></div>
+      <p class="card-title">JOB CARD · SIGN IN</p>
+      <label class="field">Username<input id="lu" name="username" autocomplete="username" required spellcheck="false"></label>
+      <label class="field">Password<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+      <p id="loginErr" class="err-text" role="alert"></p>
+      <button class="key-btn run wide" type="submit">Sign in</button>
+      <div class="demo">
+        <p>Demo accounts – click one to fill it in:</p>
+        <button type="button" class="demo-row" data-demo="neha:analyst123"><span>neha / analyst123</span><i>Analyst · writes SQL</i></button>
+        <button type="button" class="demo-row" data-demo="arjun:viewer123"><span>arjun / viewer123</span><i>Viewer · English only</i></button>
+        <button type="button" class="demo-row" data-demo="admin:admin123"><span>admin / admin123</span><i>Admin</i></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= THE APP ======================= -->
+<div id="app" hidden>
+<header class="console">
+  <a class="brand" href="#/ask" aria-label="Prashna – ask a question">
+    <svg class="brand-mark" viewBox="0 0 40 28" aria-hidden="true"><path d="M6 1h33v26H1V6z"/><g class="holes"><rect x="9" y="7" width="2" height="5"/><rect x="15" y="15" width="2" height="5"/><rect x="21" y="7" width="2" height="5"/><rect x="27" y="11" width="2" height="5"/><rect x="33" y="17" width="2" height="5"/></g></svg>
+    <span class="brand-name">Prashna</span>
+  </a>
+  <div class="lamps" aria-hidden="true"><i class="lamp on"></i><i class="lamp"></i><i class="lamp amber on"></i><i class="lamp"></i><i class="lamp on"></i></div>
+  <nav id="nav" class="switches" aria-label="Pages"></nav>
+  <div class="console-right">
+    <span class="who"><b id="meName"></b><i id="meRole"></i></span>
+    <button class="key-btn small" type="button" data-theme-toggle>Dark mode</button>
+    <button class="key-btn small" type="button" id="logoutBtn">Sign out</button>
+  </div>
+</header>
+
+<main>
+<!-- ======================= ASK ======================= -->
+<section id="view-ask" class="view">
+  <div class="drives" id="drives" role="tablist" aria-label="Database"></div>
+
+  <form id="askForm" class="punch-card question-card" autocomplete="off">
+    <div class="card-strip" aria-hidden="true"></div>
+    <div class="card-head">
+      <p class="card-title">QUESTION CARD</p>
+      <p class="card-db" id="askDbName"></p>
+    </div>
+    <label class="sr-only" for="q">Your question</label>
+    <textarea id="q" rows="2" maxlength="400" spellcheck="true" placeholder="e.g. Average marks in DBMS for girls from Ranchi"></textarea>
+    <div class="holes-row" id="holes" aria-live="polite"></div>
+    <div class="card-actions">
+      <button class="key-btn run" type="submit" id="askBtn">Run <kbd>Enter</kbd></button>
+      <span class="hint">Shift + Enter for a new line</span>
+    </div>
+  </form>
+
+  <div class="chits" id="chits" aria-label="Example questions"></div>
+
+  <div id="answer" hidden>
+    <div class="answer-grid">
+      <!-- left: how it was understood -->
+      <div class="left-col">
+        <section class="panel meter-panel">
+          <h2 class="panel-title">Understanding</h2>
+          <div class="meter-row">
+            <svg class="meter" id="meter" viewBox="0 0 120 70" aria-hidden="true">
+              <path class="meter-face" d="M10 62 A50 50 0 0 1 110 62"/>
+              <path class="meter-red" d="M10 62 A50 50 0 0 1 75.5 14.4"/>
+              <g id="meterTicks"></g>
+              <line id="needle" class="needle" x1="60" y1="62" x2="60" y2="18"/>
+              <circle cx="60" cy="62" r="4" class="pivot"/>
+            </svg>
+            <div>
+              <p class="meter-num" id="confNum">–</p>
+              <p class="meter-label" id="confLabel"></p>
+              <p class="source-tag" id="sourceTag"></p>
+            </div>
+          </div>
+          <ul class="notes" id="notes"></ul>
+        </section>
+
+        <section class="punch-card sql-card" id="sqlCard">
+          <div class="card-strip" aria-hidden="true"></div>
+          <div class="card-head">
+            <p class="card-title">SQL DECK</p>
+            <button class="link-btn" type="button" id="copySql">Copy</button>
+          </div>
+          <pre class="sql-view" id="sqlView"></pre>
+          <div id="sqlEditWrap" hidden>
+            <label class="sr-only" for="sqlEdit">Edit the SQL</label>
+            <textarea id="sqlEdit" class="sql-edit" rows="8" spellcheck="false"></textarea>
+          </div>
+          <div class="card-actions" id="sqlActions">
+            <button class="key-btn small" type="button" id="editSql">Edit SQL</button>
+            <button class="key-btn small run" type="button" id="runSql" hidden>Run my SQL</button>
+            <button class="key-btn small" type="button" id="teachBtn" hidden>Teach Prashna this</button>
+          </div>
+          <p class="err-text" id="sqlErr" role="alert"></p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How the database runs it</h2>
+          <ol class="flow" id="flow"></ol>
+        </section>
+      </div>
+
+      <!-- right: the printout -->
+      <div class="right-col">
+        <div class="printer-bar">
+          <span class="printer-label" id="printLabel">PRINTOUT</span>
+          <div class="printer-actions">
+            <div class="seg" role="group" aria-label="View">
+              <button type="button" class="seg-btn is-on" data-view="table">Table</button>
+              <button type="button" class="seg-btn" data-view="chart" id="chartBtn">Chart</button>
+            </div>
+            <button class="key-btn small" type="button" id="csvBtn">Download CSV</button>
+            <button class="key-btn small" type="button" id="saveBtn">Save card</button>
+            <span class="thumbs">
+              <button class="thumb" type="button" data-fb="1" aria-label="The answer is right" title="Right answer">✓ Right</button>
+              <button class="thumb" type="button" data-fb="-1" aria-label="The answer is wrong" title="Wrong answer">✗ Wrong</button>
+            </span>
+          </div>
+        </div>
+        <div class="greenbar" id="paper">
+          <div class="feed left" aria-hidden="true"></div>
+          <div class="paper-body">
+            <p class="print-head" id="printHead"></p>
+            <div id="tableWrap" class="table-wrap"></div>
+            <pre id="chartWrap" class="lp-chart" hidden></pre>
+            <p class="print-foot" id="printFoot"></p>
+          </div>
+          <div class="feed right" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="askError" class="panel error-panel" hidden>
+    <h2 class="panel-title">Could not answer</h2>
+    <p id="askErrorText"></p>
+    <div class="holes-row" id="errHoles"></div>
+    <p class="muted">Try one of these instead:</p>
+    <div class="chits" id="errChits"></div>
+  </div>
+</section>
+
+<!-- ======================= CATALOGUE (schema) ======================= -->
+<section id="view-catalogue" class="view" hidden>
+  <div class="page-head">
+    <div>
+      <h1>Card catalogue</h1>
+      <p class="muted">Every table, its columns and the words Prashna understands for them. Arrows (→) show how tables link (foreign keys).</p>
+    </div>
+    <div class="drives small" id="catDrives"></div>
+  </div>
+  <div class="cabinet" id="cabinet"></div>
+  <section class="panel" id="drawerPanel" hidden>
+    <div class="drawer-head">
+      <h2 class="panel-title" id="drawerTitle"></h2>
+      <button class="key-btn small" type="button" id="dropTable" hidden>Remove this table</button>
+    </div>
+    <p class="muted" id="drawerDesc"></p>
+    <div class="index-cards" id="drawerCols"></div>
+    <h3 class="sub">First rows</h3>
+    <div class="greenbar mini">
+      <div class="feed left" aria-hidden="true"></div>
+      <div class="paper-body"><div class="table-wrap" id="drawerRows"></div></div>
+      <div class="feed right" aria-hidden="true"></div>
+    </div>
+  </section>
+  <section class="panel upload-panel" id="uploadPanel" hidden>
+    <h2 class="panel-title">Feed in your own table (CSV)</h2>
+    <p class="muted">The first row must be the column names. Types (number, decimal, date, text) are guessed. Columns named like
+      email, phone or salary are marked private. The table goes into <b>My uploads</b>, which only you can see.</p>
+    <form id="uploadForm" class="upload-row">
+      <label class="file-btn key-btn small">Choose CSV file<input type="file" id="csvFile" accept=".csv,text/csv"></label>
+      <span id="csvName" class="muted">No file chosen</span>
+      <button class="key-btn small run" type="submit" id="uploadBtn" disabled>Add table</button>
+    </form>
+    <p class="err-text" id="uploadErr" role="alert"></p>
+  </section>
+</section>
+
+<!-- ======================= HISTORY ======================= -->
+<section id="view-history" class="view" hidden>
+  <div class="page-head">
+    <div>
+      <h1>Job log</h1>
+      <p class="muted">Every question asked, newest first. Click one to open it again.</p>
+    </div>
+    <div class="head-actions">
+      <div class="seg" role="group" aria-label="Whose history" id="histScope" hidden>
+        <button type="button" class="seg-btn is-on" data-scope="mine">Mine</button>
+        <button type="button" class="seg-btn" data-scope="all">Everyone</button>
+      </div>
+      <button class="key-btn small" type="button" id="clearHist">Clear my log</button>
+    </div>
+  </div>
+  <div class="greenbar log">
+    <div class="feed left" aria-hidden="true"></div>
+    <div class="paper-body"><div id="histList" class="log-list"></div></div>
+    <div class="feed right" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ======================= SHELF (saved) ======================= -->
+<section id="view-shelf" class="view" hidden>
+  <div class="page-head">
+    <div>
+      <h1>Card shelf</h1>
+      <p class="muted">Questions you saved. Click a card to run it again on today's data.</p>
+    </div>
+  </div>
+  <div class="shelf" id="shelf"></div>
+</section>
+
+<!-- ======================= TAUGHT ======================= -->
+<section id="view-taught" class="view" hidden>
+  <div class="page-head">
+    <div>
+      <h1>Taught questions</h1>
+      <p class="muted">When someone corrects the SQL and presses <b>Teach</b>, the question is kept as a template. Similar
+        questions (75%+ the same words, same kind of values) reuse it – values like a city or a number are swapped in.</p>
+    </div>
+    <div class="drives small" id="taughtDrives"></div>
+  </div>
+  <div id="taughtList" class="taught-list"></div>
+</section>
+
+<!-- ======================= TEST BENCH (admin) ======================= -->
+<section id="view-bench" class="view" hidden>
+  <div class="page-head">
+    <div>
+      <h1>Test bench</h1>
+      <p class="muted">Runs the offline engine on questions with known correct SQL and compares the <b>results</b>
+        (execution accuracy). The <b>final set</b> was written before the engine and checked once – that is the honest number.</p>
+    </div>
+    <button class="key-btn run" type="button" id="benchBtn">Run the test</button>
+  </div>
+  <div id="benchOut"></div>
+</section>
+
+<!-- ======================= PEOPLE (admin) ======================= -->
+<section id="view-people" class="view" hidden>
+  <div class="page-head"><div><h1>People</h1><p class="muted">Who can sign in and what they may do.</p></div></div>
+  <div class="roles-help">
+    <div class="role-chip"><b>Admin</b> everything, incl. this page, settings and the test bench</div>
+    <div class="role-chip"><b>Analyst</b> ask, edit and run own SQL, teach, upload tables</div>
+    <div class="role-chip"><b>Viewer</b> ask in English only; private columns (salary, email, phone) are blocked</div>
+  </div>
+  <section class="panel">
+    <div class="table-wrap"><table class="plain" id="peopleTable"></table></div>
+  </section>
+  <section class="panel">
+    <h2 class="panel-title">Add a person</h2>
+    <form id="addUser" class="form-grid">
+      <label class="field">Username<input name="username" required minlength="3" maxlength="24" spellcheck="false"></label>
+      <label class="field">Name<input name="displayName" maxlength="60"></label>
+      <label class="field">Role<select name="role"><option>VIEWER</option><option>ANALYST</option><option>ADMIN</option></select></label>
+      <label class="field">Password<input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+      <button class="key-btn run" type="submit">Add</button>
+    </form>
+    <p class="err-text" id="userErr" role="alert"></p>
+  </section>
+</section>
+
+<!-- ======================= SETTINGS (admin) ======================= -->
+<section id="view-settings" class="view" hidden>
+  <div class="page-head"><div><h1>Settings</h1><p class="muted">App-wide switches and what people are asking.</p></div></div>
+  <div class="settings-grid">
+    <section class="panel">
+      <h2 class="panel-title">Switches</h2>
+      <form id="settingsForm" class="stack">
+        <label class="field">Organisation name<input name="organisation" maxlength="80" required></label>
+        <fieldset class="field">
+          <legend>Claude (optional, needs ANTHROPIC_API_KEY)</legend>
+          <label class="radio"><input type="radio" name="claudeMode" value="OFF"> Off – offline engine only</label>
+          <label class="radio"><input type="radio" name="claudeMode" value="WHEN_NOT_SURE"> Ask Claude only when the offline engine is not sure</label>
+          <label class="radio"><input type="radio" name="claudeMode" value="ALWAYS"> Ask Claude first (offline engine as backup)</label>
+          <p class="muted small" id="claudeState"></p>
+        </fieldset>
+        <label class="check"><input type="checkbox" name="viewersSeeSql"> Viewers can see the SQL</label>
+        <button class="key-btn run" type="submit">Save settings</button>
+        <p class="err-text" id="settingsErr" role="alert"></p>
+      </form>
+    </section>
+    <section class="panel">
+      <h2 class="panel-title">Usage</h2>
+      <div id="insights"></div>
+    </section>
+  </div>
+</section>
+</main>
+</div>
+
+<!-- dialogs -->
+<dialog id="saveDialog" class="punch-card dialog">
+  <form method="dialog" id="saveForm">
+    <p class="card-title">SAVE TO SHELF</p>
+    <label class="field">Card name<input id="saveName" maxlength="80" required></label>
+    <div class="card-actions">
+      <button class="key-btn run" type="submit" value="ok">Save</button>
+      <button class="key-btn" type="button" id="saveCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="confirmDialog" class="punch-card dialog">
+  <form method="dialog" id="confirmForm">
+    <p class="card-title">PLEASE CONFIRM</p>
+    <p id="confirmText"></p>
+    <div class="card-actions">
+      <button class="key-btn run" type="submit" id="confirmYes">Remove</button>
+      <button class="key-btn" type="button" id="confirmNo">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="userDialog" class="punch-card dialog">
+  <form method="dialog" id="userForm">
+    <p class="card-title">CHANGE PERSON</p>
+    <p id="userDialogName" class="mono"></p>
+    <label class="field">Name<input name="displayName" maxlength="60"></label>
+    <label class="field">Role<select name="role"><option>VIEWER</option><option>ANALYST</option><option>ADMIN</option></select></label>
+    <label class="field">New password (leave empty to keep)<input name="password" type="password" minlength="8" autocomplete="new-password"></label>
+    <p class="err-text" id="userDialogErr" role="alert"></p>
+    <div class="card-actions">
+      <button class="key-btn run" type="submit">Save</button>
+      <button class="key-btn" type="button" id="userCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
