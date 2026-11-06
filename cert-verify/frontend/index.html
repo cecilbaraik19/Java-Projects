@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pramaan – Blockchain Certificate Verification</title>
+  <meta name="description" content="Check if a certificate is real. Institutions seal every certificate on a blockchain; anyone can verify it.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pinyon+Script&family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Sets Daylight / UV lamp mode before the page is drawn, so there is no flash -->
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+
+  <!-- The security thread: a metallic strip with micro-text, like the thread in a bank note -->
+  <div class="thread" aria-hidden="true"><span id="threadText"></span></div>
+
+  <header class="top">
+    <a class="brand" href="#/verify" aria-label="Pramaan – home">
+      <span class="brand-seal" id="brandSeal" aria-hidden="true"></span>
+      <span class="brand-text">
+        <span class="brand-name">Pramaan</span>
+        <span class="brand-sub">Certificates you can prove</span>
+      </span>
+    </a>
+    <nav class="tabs" id="tabs" aria-label="Main"></nav>
+    <div class="top-tools">
+      <button type="button" class="lamp" id="lampBtn" aria-pressed="false">
+        <span class="lamp-dot" aria-hidden="true"></span><span id="lampText">UV lamp</span>
+      </button>
+      <span id="who" class="who"></span>
+    </div>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <footer class="foot">
+    <span class="micro" id="footMicro" aria-hidden="true"></span>
+    <p>Pramaan · blockchain certificate verification · a student project. All institutions, people and marks in the demo are made up.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
