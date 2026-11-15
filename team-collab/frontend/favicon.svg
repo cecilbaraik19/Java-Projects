@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <pattern id="air" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="12" fill="#C62F2F"/><rect x="6" width="6" height="12" fill="#234A9C"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#air)"/>
+  <rect x="7" y="7" width="50" height="50" rx="7" fill="#F6F0E2"/>
+  <circle cx="32" cy="32" r="15" fill="none" stroke="#1B2A41" stroke-width="2.5"/>
+  <path d="M17 32h30M32 17c-6 8-6 22 0 30M32 17c6 8 6 22 0 30" fill="none" stroke="#1B2A41" stroke-width="2"/>
+  <path d="M40 22l9-5-3 10z" fill="#C62F2F"/>
+</svg>
