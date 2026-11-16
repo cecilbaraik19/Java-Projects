@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1" fill="#c9bfa8"/></pattern>
+    <pattern id="tape" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="3" height="6" fill="#f08a6c"/><rect x="3" width="3" height="6" fill="#f6b39f"/>
+    </pattern>
+  </defs>
+  <rect x="6" y="4" width="50" height="56" rx="6" fill="#fbf7ee" stroke="#2a2733" stroke-width="3"/>
+  <rect x="6" y="4" width="50" height="56" rx="6" fill="url(#dots)"/>
+  <rect x="46" y="4" width="5" height="56" fill="#c8553d"/>
+  <rect x="12" y="10" width="30" height="9" fill="url(#tape)" opacity=".9" transform="rotate(-4 27 14)"/>
+  <circle cx="18" cy="31" r="3" fill="#2a2733"/>
+  <path d="M15 42l6 6M21 42l-6 6" stroke="#2a2733" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27 31h12M27 45h12" stroke="#2a2733" stroke-width="3" stroke-linecap="round"/>
+</svg>
